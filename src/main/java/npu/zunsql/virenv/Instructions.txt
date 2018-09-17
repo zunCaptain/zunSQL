@@ -1,0 +1,101 @@
+数据库支持的数据类型：
+1.整数 Integer
+2.字符串 String
+3.浮点型 Float
+
+
+虚拟机支持的指令格式为：opcode(String) p1(String) p2(String) p3(String)
+
+                            支持指令一览表
+
+——————————————————————————————————————————————————————————————————————————
+opcode                  p1              p2              p3
+——————————————————————————————————————————————————————————————————————————
+Transaction                                               
+Commit                                                    
+Rollback
+
+CreateTable                                             table_name
+DropTable                                               table_name
+
+Insert                                                  table_name
+Delete                                                  table_name
+Select                                                  table_name
+Update                                                  table_name
+
+AddCol                  col_name      col_type
+BeginPK
+AddPK                   col_name        
+EndPK
+
+BeginItem                                                 
+AddItemCol              col_name      col_type      value
+EndItem                                                   
+
+BeginFilter                                                 
+Operand					col_name	  constant
+Operator				op
+EndFilter                                                 
+
+BeginColSelect                                            
+AddColSelect            col_name                        
+EndColSelect                                              
+
+Set                     col_name
+BeginExpression
+EndExpression
+
+BeginJoin
+AddTable                table_name
+EndJoin                 table_name
+
+Execute                                                   
+——————————————————————————————————————————————————————————————————————————
+
+op 支持的字符串：GT、GE、LT、LE、EQ、NE、Mul、Div、Add、Sub、Not、And、Or、Neg
+
+示例（参数位置请参照指令表，空参数连带其位置会被省略）
+
+[sql]
+select a,b from x,y where z<10/2 and w>100*q
+
+[bytecode]
+Transaction
+BeginJoin
+AddTable x
+AddTable y
+EndJoin $1
+BeginColSelect
+AddColSelect a
+AddCOlSelect b
+EndColSelect
+BeginFilter
+Operand z
+Operand 10
+Operand 2
+Operator Div
+Operator LT
+Operand w
+Operand 100
+Operand q
+Operator Mul
+Operator GT
+Operator And
+EndFilter
+Execute
+Commit
+
+[sql]
+update t1 set a=b*10
+
+[bytecode]
+Transaction
+Update t1
+Set a
+BeginExpression
+Operand b
+Operand 10
+Operator Mul
+EndExpression
+Execute
+Commit
