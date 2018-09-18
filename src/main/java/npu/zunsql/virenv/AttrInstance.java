@@ -1,4 +1,4 @@
-package npu.zunsql.ve;
+package npu.zunsql.virenv;
 
 class AttrInstance
 {

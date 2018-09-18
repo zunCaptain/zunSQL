@@ -3,10 +3,10 @@ package npu.zunsql;
 import npu.zunsql.codegen.CodeGenerator;
 import npu.zunsql.sqlparser.Parser;
 import npu.zunsql.sqlparser.ast.Relation;
-import npu.zunsql.ve.Instruction;
-import npu.zunsql.ve.QueryResult;
-import npu.zunsql.ve.VirtualMachine;
-import npu.zunsql.tree.Database;
+import npu.zunsql.virenv.Instruction;
+import npu.zunsql.virenv.QueryResult;
+import npu.zunsql.virenv.VirtualMachine;
+import npu.zunsql.treemng.Database;
 
 import java.io.IOException;
 import java.util.List;

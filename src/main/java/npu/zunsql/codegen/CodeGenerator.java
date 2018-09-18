@@ -1,8 +1,8 @@
 package npu.zunsql.codegen;
 
 import npu.zunsql.sqlparser.ast.*;
-import npu.zunsql.ve.Instruction;
-import npu.zunsql.ve.OpCode;
+import npu.zunsql.virenv.Instruction;
+import npu.zunsql.virenv.OpCode;
 
 import java.util.ArrayList;
 import java.util.List;

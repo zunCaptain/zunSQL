@@ -1,6 +1,6 @@
-package npu.zunsql.ve;
+package npu.zunsql.virenv;
 
-import npu.zunsql.tree.BasicType;
+import npu.zunsql.treemng.BasicType;
 
 public class UnionOperand {
     private String value;

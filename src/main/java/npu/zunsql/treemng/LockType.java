@@ -1,4 +1,4 @@
-package npu.zunsql.tree;
+package npu.zunsql.treemng;
 
 public enum LockType {
     Locked,

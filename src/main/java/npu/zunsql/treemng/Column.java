@@ -1,4 +1,4 @@
-package npu.zunsql.tree;
+package npu.zunsql.treemng;
 
 import javafx.scene.control.Tab;
 

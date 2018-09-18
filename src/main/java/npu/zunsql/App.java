@@ -3,7 +3,7 @@ import npu.zunsql.DBInstance;
 import npu.zunsql.cache.CacheMgr;
 import npu.zunsql.cache.Page;
 import npu.zunsql.cache.Transaction;
-import npu.zunsql.ve.QueryResult;
+import npu.zunsql.virenv.QueryResult;
 import sun.misc.Cache;
 
 import java.io.IOException;
@@ -38,11 +38,14 @@ public class App {
         */
 
         DBInstance dbinstance = DBInstance.Open("test.db");
-        QueryResult result = dbinstance.Execute("create table student(stuno int primary key, name varchar,score double)");
+        QueryResult result;
+        result = dbinstance.Execute("create table student(stuno int primary key, name varchar,score double)");
+        
+        //result = dbinstance.Execute("select * from student");
 
 
-        result = dbinstance.Execute("insert into student (stuno, name, score) values (2017006, 'zhang', 98.0+1)");
-        //result = dbinstance.Execute("insert into student (stuno, name, score) values (2017005, 'zhang', 98.0+1)");
+        //result = dbinstance.Execute("insert into student (stuno, name, score) values (2017006, 'zhang', 98.0+1)");
+        result = dbinstance.Execute("insert into student (stuno, name, score) values (2017005, 'zhang', 98.0+1)");
 
         //System.out.println("Insert Row:" + result.getAffectedCount());
         //result=dbinstance.Execute("select * from student");

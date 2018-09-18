@@ -1,7 +1,7 @@
-package npu.zunsql.ve;
+package npu.zunsql.virenv;
 
 import javafx.util.Pair;
-import npu.zunsql.tree.BasicType;
+import npu.zunsql.treemng.BasicType;
 
 import java.util.Stack;
 
