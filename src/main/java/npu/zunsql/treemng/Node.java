@@ -470,7 +470,9 @@ public class Node {
                     {
                         if (fatherNodeID < 0)
                         {
-                            if (rowList.size() < 1)
+                        	if ((rowList.size() < 1) &&  (sonNodeList.size() < 1)) {
+                        		return true;
+                        	} else if (rowList.size() < 1)
                             {
                                 rowList = new Node(sonNodeList.get(0),cacheManager,thisTran).rowList;
                                 sonNodeList = new Node(sonNodeList.get(0),cacheManager,thisTran).sonNodeList;

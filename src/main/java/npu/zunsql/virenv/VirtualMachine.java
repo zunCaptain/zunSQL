@@ -509,7 +509,7 @@ public class VirtualMachine {
             if (evalDiscriptions.get(i).cmd == OpCode.Operand) {
                 if (evalDiscriptions.get(i).col_name != null) {
 
-                    for (int j = 0; j < info.size(); i++) {
+                    for (int j = 0; j < info.size(); j++) {
                         if (info.get(j).equals(evalDiscriptions.get(i).col_name)) {
                             exp.addOperand(new UnionOperand(p.getColumnType(info.get(j)), p.getData().get(j)));
                         }
