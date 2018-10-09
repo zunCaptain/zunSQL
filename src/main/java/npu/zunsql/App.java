@@ -40,12 +40,30 @@ public class App {
         DBInstance dbinstance = DBInstance.Open("test.db");
         QueryResult result;
         result = dbinstance.Execute("create table student(stuno int primary key, name varchar,score double)");
+        result = dbinstance.Execute("create table teacher(stuno int primary key, name varchar,score double)");
         
         //result = dbinstance.Execute("select * from student");
 
 
         //result = dbinstance.Execute("insert into student (stuno, name, score) values (2017006, 'zhang', 98.0+1)");
-        result = dbinstance.Execute("insert into student (stuno, name, score) values (2017005, 'zhang', 98.0+1)");
+        result = dbinstance.Execute("insert into teacher (stuno, name, score) values (2017005, 'zhang', 98.0+1)");
+        
+//        result = dbinstance.Execute("drop table teacher");
+        
+        result = dbinstance.Execute("select * from student");
+        System.out.println(result.getRes());
+        
+        result = dbinstance.Execute("select * from teacher");
+        System.out.println(result.getRes());
+        
+        result = dbinstance.Execute("select * from master");
+        System.out.println(result.getRes());
+        
+        result = dbinstance.Execute("drop table student");
+//        System.out.println(result.getRes());
+        
+        result = dbinstance.Execute("select * from master");
+        System.out.println(result.getRes());
 
         //System.out.println("Insert Row:" + result.getAffectedCount());
         //result=dbinstance.Execute("select * from student");

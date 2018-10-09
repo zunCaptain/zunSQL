@@ -60,6 +60,14 @@ public class Database
         tList.add(BasicType.String);
         tList.add(BasicType.Integer);
         master = createTable("master","tableName",sList,tList,initTran);
+        
+        List<String> masterRow_s = new ArrayList<String>();
+        masterRow_s.add("master");
+        masterRow_s.add("0");
+
+        Cursor masterCursor = master.createCursor(initTran);
+        masterCursor.insert(initTran, masterRow_s);
+        
         return true;
     }
 
@@ -99,18 +107,22 @@ public class Database
         // 整合columnlist并且将主键放置第一列
         for(int i=0;i<columnNameList.size();i++)
         {
-            int temp = 0;
             if(columnNameList.get(i).equals(keyName))
             {
                 Column tempColumn = new Column(tList.get(i),columnNameList.get(i),0);
-                columns.add(0,tempColumn);
-                temp--;
-            }
-            else
-            {
-                Column tempColumn = new Column(tList.get(i),columnNameList.get(i),i+1+temp);
                 columns.add(tempColumn);
+                break;
             }
+        }
+        
+        for(int i=0;i<columnNameList.size();i++)
+        {
+        	 if(!columnNameList.get(i).equals(keyName))
+             {
+                 Column tempColumn = new Column(tList.get(i),columnNameList.get(i),columns.size());
+                 columns.add(tempColumn);
+//                 break;
+             }
         }
 
         ObjectOutputStream obj=new ObjectOutputStream(byt);
@@ -181,7 +193,13 @@ public class Database
         masterCursor.moveToUnpacked(thisTran,tableName);
         int pageID = masterCursor.getCell_i("pageNumber");
         Table thistable = new Table(pageID,cacheManager,thisTran);
-        thistable.getRootNode(thisTran).drop(thisTran);
+        
+//        thistable.getRootNode(thisTran).drop(thisTran);
+        Node rootnode = thistable.getRootNode(thisTran);
+        if(rootnode != null) {
+        	rootnode.drop(thisTran);
+        }
+        
         cacheManager.deletePage(thisTran.tranNum,pageID);
         masterCursor.delete(thisTran);
         return true;

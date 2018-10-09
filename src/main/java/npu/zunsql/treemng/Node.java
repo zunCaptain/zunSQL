@@ -420,7 +420,7 @@ public class Node {
         {
             insertNumber = rowList.size();
         }
-        if (sonNodeList.size() == 0)
+        if ((sonNodeList == null)|| (sonNodeList.size() == 0))
         {
             rowList.add(insertNumber,row);
             // 维护page信息
@@ -461,7 +461,7 @@ public class Node {
             Row thisRow = rowList.get(i);
             if (thisRow.getCell(0).equalTo(key))
             {
-                if (sonNodeList == null)
+                if ((sonNodeList == null) || (sonNodeList.size() == 0))
                 {
                     rowList.remove(i);
                     // 维护page信息
@@ -513,7 +513,7 @@ public class Node {
         {
             deleteNumber = rowList.size();
         }
-        if (sonNodeList == null)
+        if ((sonNodeList == null) || (sonNodeList.size() == 0))
         {
             return false;
         }
@@ -536,7 +536,7 @@ public class Node {
     }
 
     public Row getFirstRow(Transaction thisTran) throws IOException, ClassNotFoundException {
-        if (sonNodeList == null)
+        if ((sonNodeList == null) || (sonNodeList.size() == 0))
         {
             return rowList.get(0);
         }
@@ -547,7 +547,7 @@ public class Node {
     }
 
     public Row getLastRow(Transaction thisTran) throws IOException, ClassNotFoundException {
-        if (sonNodeList == null)
+        if ((sonNodeList == null) || (sonNodeList.size() == 0))
         {
             return rowList.get(rowList.size() - 1);
         }
@@ -568,7 +568,7 @@ public class Node {
             }
             else if (thisRow.getCell(0).bigerThan(key))
             {
-                if (sonNodeList == null)
+                if ((sonNodeList == null) || (sonNodeList.size() == 0))
                 {
                     insertNumber = i;
                     break;
@@ -579,7 +579,7 @@ public class Node {
                 }
             }
         }
-        if (sonNodeList == null)
+        if ((sonNodeList == null) || (sonNodeList.size() == 0))
         {
             if (insertNumber > 0)
             {
