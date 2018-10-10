@@ -46,9 +46,10 @@ public class App {
 
         //result = dbinstance.Execute("insert into student (stuno, name, score) values (2017006, 'zhang', 98.0+1)");
         result = dbinstance.Execute("insert into teacher (stuno, name, score) values (2017005, 'zhang', 98.0+1)");
+        result = dbinstance.Execute("insert into teacher (stuno, name, score) values (2017004, 'li', 66)");
         
 //        result = dbinstance.Execute("drop table teacher");
-        
+//        
 //        result = dbinstance.Execute("select * from student");
 //        System.out.println(result.getRes());
 //        
@@ -58,7 +59,11 @@ public class App {
 //        result = dbinstance.Execute("select * from master");
 //        System.out.println(result.getRes());
         
-        result = dbinstance.Execute("update teacher set name='wang' where stuno=2017005");
+//        result = dbinstance.Execute("update teacher set name='wang' where stuno=2017005");
+//        result = dbinstance.Execute("select * from teacher");
+//        System.out.println(result.getRes());
+        
+        result = dbinstance.Execute("delete from teacher where stuno=2017004");
         result = dbinstance.Execute("select * from teacher");
         System.out.println(result.getRes());
         
