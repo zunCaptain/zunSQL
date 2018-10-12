@@ -39,6 +39,7 @@ public class App {
 
         DBInstance dbinstance = DBInstance.Open("test.db");
         QueryResult result;
+        System.out.println("----create table------------");
         result = dbinstance.Execute("create table student(stuno int primary key, name varchar,score double)");
         result = dbinstance.Execute("create table teacher(stuno int primary key, name varchar,score double)");
         
@@ -60,20 +61,24 @@ public class App {
 //        System.out.println(result.getRes());
         
 //        result = dbinstance.Execute("update teacher set name='wang' where stuno=2017005");
-//        result = dbinstance.Execute("select * from teacher");
-//        System.out.println(result.getRes());
+      //  result = dbinstance.Execute("select * from teacher");
+       // System.out.println(result.getRes());
         
         result = dbinstance.Execute("delete from teacher where stuno=2017004");
-        result = dbinstance.Execute("select * from teacher");
-        System.out.println(result.getRes());
         
+        System.out.println("-----------test update------------");
+        result = dbinstance.Execute("update teacher set name='wang' where stuno=2017005");
+        result = dbinstance.Execute("update teacher set score=666 where stuno=2017005");
+        //System.out.println("---------------update end----------");
+        result = dbinstance.Execute("select * from teacher");	
+        System.out.println(result.getRes());
+        System.out.println("--------update result----------");
+           
         
         result = dbinstance.Execute("drop table student");
-//        System.out.println(result.getRes());
-        
-        result = dbinstance.Execute("select * from master");
         System.out.println(result.getRes());
-        
+        result = dbinstance.Execute("select * from master");
+        System.out.println(result.getRes());        
         result = dbinstance.Execute("drop table teacher");
 //      System.out.println(result.getRes());
       

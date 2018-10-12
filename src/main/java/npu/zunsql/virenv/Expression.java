@@ -112,7 +112,7 @@ public class Expression {
     }
     Integer EQ(UnionOperand a,UnionOperand b){
         Pair<UnionOperand,UnionOperand> obj=typeCast(new Pair<>(a,b));
-        if(obj.getKey().getValue()==obj.getValue().getValue()){
+        if(obj.getKey().getValue().equals(obj.getValue().getValue())){
             return 1;
         }
         else if(obj.getKey().getType() == BasicType.String){

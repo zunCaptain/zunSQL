@@ -5,6 +5,8 @@ import npu.zunsql.treemng.*;
 import java.io.IOException;
 import java.util.*;
 
+import javax.sound.sampled.Port.Info;
+
 public class VirtualMachine {
     //作为过滤器来对记录进行筛选
     private List<EvalDiscription> filters;
@@ -13,7 +15,7 @@ public class VirtualMachine {
     //存储要插入的记录
     private List<AttrInstance> record;
     //存储要创建表的各项表头，该数据结构仅用于创建表
-    private List<Column> columns;
+    private List<Column > columns;
     //存储execute指令执行后的查询结构，仅select指令对应的操作会使得该集合非空
     private QueryResult result;
     //要操作的对象表名
@@ -70,8 +72,10 @@ public class VirtualMachine {
     public QueryResult run(List<Instruction> instructions) throws Exception {
 
         for (Instruction cmd : instructions) {
+        	//System.out.println(cmd.opCode+" "+cmd.p1+" "+cmd.p2+" "+cmd.p3);
             run(cmd);
         }
+        //isJoin= false;
         return result;
     }
 
@@ -105,6 +109,7 @@ public class VirtualMachine {
 
             //下面是创建表的处理代码
             case CreateTable:
+            	columns.clear();
                 activity = Activity.CreateTable;
                 columnsReadOnly = false;
                 targetTable = p3;
@@ -142,6 +147,7 @@ public class VirtualMachine {
                 targetTable = p3;
                 record.clear();
                 updateValues.clear();
+                
                 break;
 
             //下面是删除操作，这是个延时操作
@@ -183,6 +189,7 @@ public class VirtualMachine {
 
             case EndFilter:
                 filters = singleUpdateValue;
+                //System.out.println("filters name"+filters.get(0).col_name);
                 suvReadOnly = true;
                 break;
 
@@ -223,18 +230,27 @@ public class VirtualMachine {
                 break;
 
             case BeginExpression:
+            	//updateValues.clear();
                 suvReadOnly = false;
                 singleUpdateValue = new ArrayList<>();
                 break;
 
             case EndExpression:
+            	//System.out.println("###singleUpdateValue:"+singleUpdateValue.get(0).cmd+" "+
+                //		singleUpdateValue.get(0).col_name+" "+singleUpdateValue.get(0).constant);
                 updateValues.add(singleUpdateValue);
+                //System.out.println(updateValues.size());
+               // System.out.println("*****updateValue***"+updateValues.get(0).get(0).cmd);
+                //System.out.println("*****updateValue***"+updateValues.get(0).get(0).col_name);
+                //System.out.println("*****updateValue***"+updateValues.get(0).get(0).constant);
                 suvReadOnly = true;
                 break;
 
             //记录Expression描述的代码
             case Operand:
                 singleUpdateValue.add(new EvalDiscription(opCode, p1, p2));
+               // System.out.println("###singleUpdateValue:"+singleUpdateValue.get(0).cmd+" "+
+               // 		singleUpdateValue.get(0).col_name+" "+singleUpdateValue.get(0).constant);
                 break;
 
             case Operator:
@@ -266,6 +282,7 @@ public class VirtualMachine {
                 break;
             case Insert:
                 insert();
+                updateValues.clear();
                 break;
             case CreateTable:
                 createTable();
@@ -292,6 +309,7 @@ public class VirtualMachine {
         List<String> headerName = new ArrayList<>();
         List<BasicType> headerType = new ArrayList<>();
         for (Column n : columns) {
+        	//System.out.println("#######name:"+n.ColumnName+"##########");
             headerName.add(n.ColumnName);
             switch (n.getColumnType()) {
                 case "String":
@@ -304,7 +322,9 @@ public class VirtualMachine {
                     headerType.add(BasicType.Integer);
             }
         }
-
+        //System.out.println("headerName size"+headerName.size());
+        //for(int i = 0 ; i < headerName.size();i++)
+        	//System.out.println(headerName.get(i));
         if (db.createTable(targetTable, pkName, headerName, headerType, tran) == null) {
             Util.log("创建表失败");
         }
@@ -326,7 +346,10 @@ public class VirtualMachine {
         if (isJoin)
             ans = eval(filters, joinIndex);
         else
-            ans = eval(filters, p);
+            {
+        		ans = eval(filters, p);
+        		//System.out.println("this should show twice");
+            }
         if (ans.getType() == BasicType.String) {
             Util.log("where子句的表达式返回值不能为String");
             return false;
@@ -428,21 +451,58 @@ public class VirtualMachine {
         tran = db.beginWriteTrans();
         Cursor p = db.getTable(targetTable, tran).createCursor(tran);
         List<String> header = db.getTable(targetTable, tran).getColumnsName();
+        //for(int i = 0 ; i < header.size() ; i++)
+        //	System.out.println("colnumnsname:"+header.get(i));
         while (p != null) {
             List<String> row = p.getData();
+            //System.out.println(check(p));
             if (check(p)) {
-                for (int i = 0; i < updateAttrs.size(); i++) {
+            	//System.out.println(updateAttrs.get(0));
+            	//System.out.println("updateAttrs.size:"+updateAttrs.size());
+            	
+            	for (int i = 0; i < updateAttrs.size(); i++) {
                     //查询要更新的属性的信息并创建cell对象来执行更新
-                    String name = record.get(i).attrName;
-                    for (String info : header) {
-                        if (info.equals(name)) {
+                    //String attrname = record.get(i).attrName;
+            		String attrname = updateAttrs.get(i);
+                    //String attrname = "name";
+            		//System.out.println("record name:"+attrname+",updateAttrs.size="+updateAttrs.size());
+                    //循环的方式是否正确?
+                   /*for (String info : header) {
+                        if (info.equals(attrname)) {
+                        	System.out.println("******"+info);
                             row.set(i, eval(updateValues.get(i), p).getValue());
+                            System.out.println("set value:"+i+" "+eval(updateValues.get(i), p).getValue());
                         }
+                    } */                  
+            		//System.out.println("##################");
+            		/*for(int l  = 0 ; l < updateValues.size() ;l++)
+            		{
+            			for(int k = 0 ; k < updateValues.size();k++)
+            			{
+            				
+            				System.out.println(updateValues.get(l).get(k));
+            			}
+            		}*/
+            		//System.out.println("##################");
+            		//;
+                   for(int j =0 ; j < header.size() ; j++)
+                    {
+                	   
+                    	if(header.get(j).equals(attrname)){
+                    		//System.out.println("####"+header.get(j));
+                    		row.set(j, eval(updateValues.get(i),p).getValue());
+                            //System.out.println("set value:"+j+" "+updateValues.get(i).get(0).cmd);
+                            //for(int ii =0 ; ii < updateValues.get(0).size() ; ii++){
+                            //	System.out.println("updataValue:"+updateValues.get(0).get(ii).cmd+" "+updateValues.get(0).get(ii).col_name
+                            //			+" "+updateValues.get(0).get(ii).constant);	
+                            //}
+                    	}
                     }
                 }
-
             }
             if(p.setData(tran, row)){
+            	//for(String info:row)
+            	//	System.out.println("row information: "+info);
                 result.addAffectedCount();
             }
             if(false==p.moveToNext(tran)){

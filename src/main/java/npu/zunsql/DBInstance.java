@@ -46,7 +46,6 @@ public class DBInstance
 		statements.add(Parser.parse(statement));
 
 		List<Instruction> Ins = CodeGenerator.GenerateByteCode(statements);
-
 		try {
 			return vm.run(Ins);
 		}catch(Exception e){
