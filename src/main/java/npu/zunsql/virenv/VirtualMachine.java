@@ -267,12 +267,27 @@ public class VirtualMachine {
 
         }
     }
+    
+    private void ConditonClear() throws IOException, ClassNotFoundException {
+    	recordReadOnly = true;
+        columnsReadOnly = true;
+        selectedColumnsReadOnly = true;
+        suvReadOnly = true;
+
+        //tran = null;
+        //result = null;
+        activity = null;
+        targetTable = null;
+        joinResult = null;
+    }
 
     private void execute() throws IOException, ClassNotFoundException {
         result=new QueryResult();
         switch (activity) {
             case Select:
                 select();
+                //ConditonClear();
+                isJoin = false;
                 break;
             case Delete:
                 delete();

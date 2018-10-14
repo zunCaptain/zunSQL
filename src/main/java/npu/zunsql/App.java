@@ -45,9 +45,9 @@ public class App {
 		result = dbinstance.Execute("insert into teacher (stuno, name, score) values (2017004, 'li', 66)");
 
 		result = dbinstance.Execute("insert into student (stuno, name, score) values (2017005, 'zhao', 60)");
-		
+		System.out.println("--------select * result--------");
 		result = dbinstance.Execute("select * from teacher");
-		System.out.println(result.getRes());
+		System.out.println("#"+result.getRes());
 
 		result = dbinstance.Execute("delete from teacher where stuno=2017004");
 
