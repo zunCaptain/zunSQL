@@ -7,24 +7,24 @@ import java.util.List;
 
 public class Page implements Serializable
 {
-    public static final int PAGE_SIZE = 102400;
-
-    protected static int pageCount = 0;
+	
+	private static final long serialVersionUID = 1L;
+	public static final int PAGE_SIZE = 102400;
+    
+	protected static int pageCount = 0;
     protected static List<Integer> unusedID =  new ArrayList<Integer>();
-
     protected int pageID;
     protected ByteBuffer pageBuffer = null;
 
-    //
     public Page(ByteBuffer buffer)
     {
         //TODO:unusedLIst
-        if(this.unusedID.isEmpty())
+        if(Page.unusedID.isEmpty())
             this.pageID = pageCount++;
         else
         {
-            this.pageID = this.unusedID.indexOf(0);
-            this.unusedID.remove(0);
+            this.pageID = Page.unusedID.indexOf(0);
+            Page.unusedID.remove(0);
         }
         this.pageBuffer = buffer;
     }
@@ -35,7 +35,6 @@ public class Page implements Serializable
         this.pageBuffer = buffer;
     }
 
-    //拷贝构造方法
     public Page(Page page)
     {
         this.pageID = page.pageID;

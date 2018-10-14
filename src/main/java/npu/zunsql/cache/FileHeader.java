@@ -2,18 +2,18 @@ package npu.zunsql.cache;
 
 public class FileHeader
 {
-    protected String version;
-    public static String magicNum;
+    protected int version;
+    public static int magicNum;
     public static final int fileHeaderSize = 1024;
 
-    FileHeader(String version, String magicNum)
+    FileHeader(int version, int magicNum)
     {
         this.version = version;
-        this.magicNum = magicNum;
+        FileHeader.magicNum = magicNum;
     }
     boolean isValid()
     {
-        if(this.version == "0.1" && this.magicNum == "3.1415926")
+        if(this.version == 1 && FileHeader.magicNum == 123)
             return true;
         else
             return false;

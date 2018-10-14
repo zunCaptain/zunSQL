@@ -1,6 +1,6 @@
 package npu.zunsql.cache;
 
-import javax.print.DocFlavor;
+//import javax.print.DocFlavor;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -11,7 +11,6 @@ public class Transaction
     protected int transID;
     protected static final String SUFFIX_JOURNAL = "-journal";
 
-    //标记是读事务还是写事务，WR是true为写，WR是false为读
     protected boolean WR;
 
     protected ReadWriteLock lock;
@@ -26,7 +25,6 @@ public class Transaction
         this.transID = transCount++;
     }
 
-    //
     public void begin()
     {
         if(this.WR)
@@ -39,7 +37,6 @@ public class Transaction
                     Boolean bool = journal.createNewFile();
                     System.out.println("File created: "+bool);
                 }
-
             }
             catch (IOException e)
             {
@@ -52,6 +49,7 @@ public class Transaction
             this.lock.readLock().lock();
         }
     }
+    
     public void commit()
     {
         if(this.WR)
@@ -62,11 +60,12 @@ public class Transaction
         {
             this.lock.readLock().unlock();
         }
-        File journal = new File(Integer.toString(this.transID)+SUFFIX_JOURNAL);
-        if(journal.exists()&&journal.isFile())
-            journal.delete();
+        //File journal = new File(Integer.toString(this.transID)+SUFFIX_JOURNAL);
+        //if(journal.exists()&&journal.isFile())
+        //    journal.delete();
 
     }
+    
     public void rollback()
     {
         if(this.WR)
