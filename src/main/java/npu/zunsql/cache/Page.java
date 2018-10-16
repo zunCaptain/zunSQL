@@ -9,7 +9,7 @@ public class Page implements Serializable
 {
 	
 	private static final long serialVersionUID = 1L;
-	public static final int PAGE_SIZE = 102400;
+	public static final int PAGE_SIZE = 1024;
     
 	protected static int pageCount = 0;
     protected static List<Integer> unusedID =  new ArrayList<Integer>();

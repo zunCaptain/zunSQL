@@ -15,7 +15,7 @@ public class CacheMgr
     protected static final int CacheCapacity = 10;
     protected String dbName = null;
     protected static final int FILEHEADERSIZE = 1024;
-    protected static final int UNUSEDLISTSIZE = 102400;
+    protected static final int UNUSEDLISTSIZE = 1024;
 
     //store the page
     protected List<Page> cacheList = null;
@@ -69,13 +69,13 @@ public class CacheMgr
                     for(int i = 0; i < unusedListNum; i++)
                     {
                     	//this if is used to move to the next unusedListBuffer when the last one is out of rage
-                        if(i % 25599 == 0)
+                        if(i % 255 == 0)
                         {
                             unusedListBuffer.flip();   //set the current position to the zero
                             unusedListBuffer.getInt(); //Page.unusedID.size()
                             Page.unusedID.add(unusedListBuffer.getInt());
                         }
-                        else if(i % 25599 == 25598)
+                        else if(i % 255 == 254)
                         {
                             Page.unusedID.add(unusedListBuffer.getInt());
                             int pageID = unusedListBuffer.getInt();
@@ -175,13 +175,13 @@ public class CacheMgr
             int history_block = -1;
             for(int i = 0; i < Page.unusedID.size(); i++)
             {
-                if(i % 25599 == 0)
+                if(i % 255 == 0)
                 {
                     unusedListBuffer.rewind();
                     unusedListBuffer.putInt(Page.unusedID.size());
                     unusedListBuffer.putInt(Page.unusedID.get(i));
                 }
-                else if(i % 25599 == 25598 || i == Page.unusedID.size()-1)
+                else if(i % 255 == 254 || i == Page.unusedID.size()-1)
                 {
                 	int backID;
                 	if(this.unusedList_PageID.size()!=0){
@@ -288,8 +288,12 @@ public class CacheMgr
 	                        //out.writeObject(tempPage);
 	                        IDBuffer.rewind();
 	                        IDBuffer.putInt(tempPage.pageID);
-	                        IDBuffer.put(tempPage.pageBuffer);
-	                        fc.write(IDBuffer);
+	                        int j;
+	                        for(j=0;j<Page.PAGE_SIZE;j=j+4){
+	                        	IDBuffer.putInt(tempPage.pageBuffer.getInt(j));
+	                        }
+	                        IDBuffer.flip();
+	                        fc.write(IDBuffer,i*(Page.PAGE_SIZE+4));
                         }
                         else{
                             System.out.println("fail to write journal");
@@ -324,8 +328,8 @@ public class CacheMgr
 	        	fin.close();
 	        }
         }
-        this.transMgr.remove(transID);
-        this.transOnPage.remove(transID);
+//        this.transMgr.remove(transID);
+//        this.transOnPage.remove(transID);
         trans.commit();
         return true;
     }
@@ -335,56 +339,83 @@ public class CacheMgr
      * lease the lock and do not affect cache
      **/
     public boolean rollbackTransation(int transID)  {
+    	System.out.println("This is transID:"+transID);
         Transaction trans = transMgr.get(transID);
+        FileChannel fc = null;
+        Page tempPage = null;
         if(trans.WR)
         {
             File journal_file = new File(Integer.toString(transID)+"-journal");
+            System.out.println("This is file length:"+journal_file.length());
+            int num = (int) (journal_file.length()/1028);
+            int i=0;
             File db_file = new File(this.dbName);
-            ObjectInputStream in = null;
-            try {
-                in = new ObjectInputStream(new FileInputStream(journal_file));
+            try{
+            	RandomAccessFile fin = new RandomAccessFile(journal_file,"r");
+            	fc = fin.getChannel();
+            	FileLock lock = fc.lock(0, Long.MAX_VALUE, true);
+            	ByteBuffer tempBuffer = ByteBuffer.allocate(Page.PAGE_SIZE);
+            	ByteBuffer tempBuffer_ID = ByteBuffer.allocate(4);
+            	for(i=0;i<num;i++){
+            		fc.read(tempBuffer_ID,i*1028);
+            		fc.read(tempBuffer,i*1028+4);
+                	int tmp_ID = tempBuffer_ID.getInt(0);
+                	tempPage = new Page(tmp_ID,tempBuffer);
+                	Page incachePage = this.cachePageMap.get(tmp_ID);
+                	if(incachePage != null){
+                		incachePage.pageBuffer.put(tempPage.pageBuffer);
+                	}
+                	if(db_file.exists() && db_file.isFile()){
+                		this.setPageToFile(tempPage, db_file);
+                	}
+                	tempBuffer_ID.clear();
+                	tempBuffer.clear();
+            	}
+            	lock.release();
+            	fin.close();
             }
-            catch (IOException e) {
+            catch(IOException e) {
                 e.printStackTrace();
             }
-            try
-            {
-                while(in.available() > 1)
-                {
-                    Page srcPage = (Page)in.readObject();
-                    Page tempPage = this.cachePageMap.get(srcPage.pageID);
-                    //cache hit and update the cache file
-                    if (tempPage != null)
-                    {
-                        tempPage.pageBuffer.put(srcPage.pageBuffer);
-                    }
-                    //at the same time , write this into the database file 
-                    //no matter cache is hit , always write into the database file
-                    if (db_file.exists() && db_file.isFile()) {
-                        this.setPageToFile(srcPage, db_file);
-                    }
-                }
+            finally{
+            	
             }
-            catch(Exception e)
-            {
-                e.printStackTrace();
-            }
-            finally
-            {
-                if(in != null) try {
-                    in.close();
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            //try
+            //{
+//                while(.available() > 1)
+//                {
+//                    Page srcPage = (Page)in.readObject();
+//                    Page tempPage = this.cachePageMap.get(srcPage.pageID);
+//                    //cache hit and update the cache file
+//                    if (tempPage != null)
+//                    {
+//                        tempPage.pageBuffer.put(srcPage.pageBuffer);
+//                    }
+//                    //at the same time , write this into the database file 
+//                    //no matter cache is hit , always write into the database file
+//                    if (db_file.exists() && db_file.isFile()) {
+//                        this.setPageToFile(srcPage, db_file);
+//                    }
+//                }
+//            }
+//            catch(Exception e)
+//            {
+//                e.printStackTrace();
+//            }
+//            finally
+//            {
+//                if(in != null) try {
+//                    in.close();
+//                }
+//                catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
-
         trans.rollback();
-        this.transMgr.remove(transID);
+//      this.transMgr.remove(transID);
         return true;
     }
-
 
     /**use transID to read pageID and return page_copy
      * if this page has been stored in the cacheList ,then directly return it
