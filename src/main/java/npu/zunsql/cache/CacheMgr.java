@@ -99,6 +99,8 @@ public class CacheMgr
                     fileHeader.putInt(0, 1);        //version
                     fileHeader.putInt(4, 123);      //magic number
                     fc.write(fileHeader, 0);
+                    ByteBuffer unusedListBuffer = ByteBuffer.allocate(CacheMgr.UNUSEDLISTSIZE);
+                    fc.write(unusedListBuffer, CacheMgr.FILEHEADERSIZE);
                     return true;
                 }
 
@@ -126,6 +128,8 @@ public class CacheMgr
                 //System.out.println("version:"+fileHeader.getInt(0));
                 //System.out.println("magic:"+fileHeader.getInt(4));
                 fc.write(fileHeader, 0);
+                ByteBuffer unusedListBuffer = ByteBuffer.allocate(CacheMgr.UNUSEDLISTSIZE);
+                fc.write(unusedListBuffer, CacheMgr.FILEHEADERSIZE);
                 //System.out.println("This is ret:" + ret);
                 System.out.println("Create new database successfully");
                 fc.close();
@@ -245,7 +249,6 @@ public class CacheMgr
             List<Page> writePageList = transOnPage.get(transID);
             File journal_file = new File(Integer.toString(transID)+"-journal");
             File db_file = new File(this.dbName);
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(journal_file));
             RandomAccessFile fin = new RandomAccessFile(journal_file, "rw");
             try{
 	            FileChannel fc = fin.getChannel();
@@ -253,78 +256,92 @@ public class CacheMgr
 	            ByteBuffer IDBuffer = ByteBuffer.allocate(Page.PAGE_SIZE+4);
 	            if(writePageList != null)
 	            {
-	                for( int i = 0 ; i < writePageList.size() ; i++)
-	                {
-	                    Page copyPage = writePageList.get(i);
-	                    Page tempPage = this.cachePageMap.get(copyPage.pageID);
-	                    //cache not hit
-	                    if (tempPage == null) {
-	                        //cache is full , then use LRU to replace it
-	                        if (this.cachePageMap.size() >= CacheMgr.CacheCapacity) {
-	                            //delete the least use recently
-	                            tempPage = this.cacheList.get(0);
-	                            this.cacheList.remove(0);
-	                            this.cachePageMap.remove(tempPage.pageID);
-	                            //get Page from file , add it to cache list and map
-	                            tempPage = getPageFromFile(copyPage.pageID);
+		            	Set<Integer> set = new HashSet<Integer>();
+		            	for( int i = 0 ; i < writePageList.size() ; i++){
+		            		Page copyPage = writePageList.get(i);
+		            		set.add(copyPage.getPageID());
+		            	}
+		            	Iterator<Integer> iter = set.iterator();
+		            	int count = 0;
+		            	while(iter.hasNext()){
+		            		int number = iter.next();
+		            		Page tempPage = this.cachePageMap.get(number);
+		            		//cache not hit
+		            		if (tempPage == null) {
+		            			//cache is full , then use LRU to replace it
+		            			if (this.cachePageMap.size() >= CacheMgr.CacheCapacity) {
+		            				//delete the least use recently
+		            				tempPage = this.cacheList.get(0);
+		            				this.cacheList.remove(0);
+		            				this.cachePageMap.remove(tempPage.pageID);
+		            				//get Page from file , add it to cache list and map
+		            				tempPage = getPageFromFile(number);
+		            			}
+		            			//cache is not full
+		            			else {
+		            				//get Page from file , add it to cache list and map
+		            				tempPage = getPageFromFile(number);
+		            			}
+		            		}
+		            		//cache hit then update list using LRU
+		            		else {
+		            			for (int j = 0; j < cacheList.size(); j++) {
+		            				Page jPage = cacheList.get(j);
+		            				if (jPage.pageID == number) {
+		            					cacheList.remove(j);
+		            					cachePageMap.remove(jPage.pageID);
+		            				}
+		            			}
+		            		}
+		                    //tempPage is the original data , try to write journal
+		                    if (journal_file.exists() && journal_file.isFile()) {
+		                        //out.writeObject(tempPage);
+		                        IDBuffer.clear();
+		                        IDBuffer.putInt(tempPage.pageID);
+		                        for(int j=0;j<Page.PAGE_SIZE;j=j+4){
+		                        	IDBuffer.putInt(tempPage.pageBuffer.getInt(j));
+		                        }
+		                        IDBuffer.rewind();
+		                        fc.write(IDBuffer,count*(Page.PAGE_SIZE+4));
+		                        count = count + 1;
 	                        }
-	                        //cache is not full
-	                        else {
-	                            //get Page from file , add it to cache list and map
-	                            tempPage = getPageFromFile(copyPage.pageID);
-	                        }
-	                    }
-	                    //cache hit then update list using LRU
-	                    else {
-	                        for (int j = 0; j < cacheList.size(); j++) {
-	                            Page jPage = cacheList.get(j);
-	                            if (jPage.pageID == copyPage.pageID) {
-	                                cacheList.remove(j);
-	                            }
-	                        }
-	                    }
-	                    //tempPage is the original data , try to write journal
-	                    if (journal_file.exists() && journal_file.isFile()) {
-	                        //out.writeObject(tempPage);
-	                        IDBuffer.rewind();
-	                        IDBuffer.putInt(tempPage.pageID);
-	                        int j;
-	                        for(j=0;j<Page.PAGE_SIZE;j=j+4){
-	                        	IDBuffer.putInt(tempPage.pageBuffer.getInt(j));
-	                        }
-	                        IDBuffer.flip();
-	                        fc.write(IDBuffer,i*(Page.PAGE_SIZE+4));
-                        }
-                        else{
-                            System.out.println("fail to write journal");
-                        }
-	
-	                    byte [] copy_content = new byte[copyPage.getPageBuffer().limit()];
-	                    copyPage.getPageBuffer().rewind();
-	                    copyPage.getPageBuffer().get(copy_content);
+	                        else{
+	                            System.out.println("fail to write journal");
+	                        }	
+	            	}
+//	                    byte [] copy_content = new byte[copyPage.getPageBuffer().limit()];
+//	                    copyPage.getPageBuffer().rewind();
+//	                    copyPage.getPageBuffer().get(copy_content);
 	                    //System.out.println();
 	                    //System.out.println("This is update file page:"+copy_content);
                         
                         //write cache
-	                    tempPage.pageID = copyPage.pageID;
-	                    tempPage.getPageBuffer().rewind();
-	                    tempPage.pageBuffer.put(copy_content, 0, copy_content.length);
-	
-	                    byte [] temp_content = new byte[tempPage.getPageBuffer().limit()];
-	                    tempPage.getPageBuffer().rewind();
-	                    tempPage.getPageBuffer().get(temp_content);
+//	                    tempPage.pageID = copyPage.pageID;
+//	                    tempPage.getPageBuffer().rewind();
+//	                    tempPage.pageBuffer.put(copy_content, 0, copy_content.length);
+//	
+//	                    byte [] temp_content = new byte[tempPage.getPageBuffer().limit()];
+//	                    tempPage.getPageBuffer().rewind();
+//	                    tempPage.getPageBuffer().get(temp_content);
 	                    //System.out.println("This is second file page:"+ temp_content);
-	
-	                    this.cacheList.add(tempPage);
-	                    this.cachePageMap.put(tempPage.pageID, tempPage);
+	                for(int i=0 ; i < writePageList.size() ; i++){
+	                    Page copyPage = writePageList.get(i);
+            			for (int j = 0; j < cacheList.size(); j++) {
+            				Page jPage = cacheList.get(j);
+            				if (jPage.pageID == copyPage.pageID) {
+            					cacheList.remove(j);	
+            					cachePageMap.remove(jPage.pageID);
+            				}
+            			}
+	                    this.cacheList.add(copyPage);
+	                    this.cachePageMap.put(copyPage.pageID, copyPage);
 	                    //write directly to the database file
 	                    if (db_file.exists() && db_file.isFile()) {
-	                        this.setPageToFile(tempPage, db_file);
+	                        this.setPageToFile(copyPage, db_file);
 	                    }
-	                	}
+	                }
 	            	}
 	        }finally{
-	        	out.close();
 	        	fin.close();
 	        }
         }
@@ -526,7 +543,7 @@ public class CacheMgr
             fc = fin.getChannel();
             //write lock
             FileLock lock = fc.lock();
-            tempPage.pageBuffer.flip();
+            tempPage.pageBuffer.rewind();
             fc.write(tempPage.pageBuffer,CacheMgr.FILEHEADERSIZE+CacheMgr.UNUSEDLISTSIZE+tempPage.pageID*Page.PAGE_SIZE);
             lock.release();
         	fin.close();
