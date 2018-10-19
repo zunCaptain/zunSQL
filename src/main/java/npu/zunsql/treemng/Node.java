@@ -538,6 +538,10 @@ public class Node {
     }
 
     public Row getFirstRow(Transaction thisTran) throws IOException, ClassNotFoundException {
+    	if((rowList == null) || (rowList.size() == 0)) {
+    		return null;
+    	}
+    	
         if ((sonNodeList == null) || (sonNodeList.size() == 0))
         {
             return rowList.get(0);

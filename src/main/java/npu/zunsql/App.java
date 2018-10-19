@@ -36,13 +36,21 @@ public class App {
 		result = dbinstance.Execute("create table student(stuno int primary key, name varchar,score double)");
 
 		result = dbinstance.Execute("insert into student (stuno, name, score) values (2017005, 'zhang', 98.0+1)");
-
-		result = dbinstance.Execute("update student set score=666 where stuno=2017005");
-		
-		result = dbinstance.Execute("rollback");
 		
 		result = dbinstance.Execute("select * from student");
 		System.out.println(result.getRes());
+		
+		result = dbinstance.Execute("delete from student");
+		
+		result = dbinstance.Execute("select * from student");
+		System.out.println(result.getRes());
+
+//		result = dbinstance.Execute("update student set score=666 where stuno=2017005");
+//		
+//		result = dbinstance.Execute("rollback");
+//		
+//		result = dbinstance.Execute("select * from student");
+		
 
 		dbinstance.Close();
 	}

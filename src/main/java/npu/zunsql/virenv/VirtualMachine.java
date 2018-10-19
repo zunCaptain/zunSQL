@@ -450,7 +450,8 @@ public class VirtualMachine {
 //        }
 
 		Cursor p = db.getTable(targetTable, tran).createCursor(tran);
-		while (p != null) {
+		
+		while (!p.isEmpty()) {
 			if (check(p)) {
 				if (p.delete(tran)) {
 					result.addAffectedCount();

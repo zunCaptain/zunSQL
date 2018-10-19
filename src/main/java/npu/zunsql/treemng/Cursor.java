@@ -16,6 +16,9 @@ public abstract class Cursor {
 	protected Cursor() {
 		;
 	}
+	
+	//判断是否为空
+	public abstract boolean isEmpty();
 
 	// 获取列类型
 	// 输入参数：columnName，列名。
@@ -98,6 +101,10 @@ class TableCursor extends Cursor {
 		}
 
 	}
+	
+	public boolean isEmpty() {
+		return thisNode == null;
+	}
 
 	public BasicType getColumnType(String columnName) {
 		return aimTable.getColumn(columnName).getType();
@@ -141,10 +148,17 @@ class TableCursor extends Cursor {
 
 	// 游标移至首条
 	public boolean moveToFirst(Transaction thisTran) throws IOException, ClassNotFoundException {
+
 		thisNode = aimTable.getRootNode(thisTran);
+
+		if (thisNode == null) {
+			return false;
+		}
+
 		while (thisNode.getSonNodeList() != null) {
 			thisNode = thisNode.getSpecialSonNode(0, thisTran);
 		}
+
 		thisRowID = 0;
 		return true;
 	}
@@ -161,7 +175,7 @@ class TableCursor extends Cursor {
 
 	// 游标后移一条
 	public boolean moveToNext(Transaction thisTran) throws IOException, ClassNotFoundException {
-		if(thisNode == null) {
+		if (thisNode == null) {
 			return false;
 		}
 		// int flagchang=0;
@@ -185,6 +199,7 @@ class TableCursor extends Cursor {
 			}
 		}
 		moveToLast(thisTran);
+//		thisNode = null;
 		return false;
 	}
 
@@ -235,7 +250,7 @@ class TableCursor extends Cursor {
 				return moveToSon(thisTran, key);
 			}
 		}
-		
+
 		if (key.bigerThan(thisNode.getRowList().get(thisNode.getRowList().size() - 1).getCell(0))) {
 			thisNode = thisNode.getSpecialSonNode(thisNode.getRowList().size(), thisTran);
 			return moveToSon(thisTran, key);
@@ -275,11 +290,32 @@ class TableCursor extends Cursor {
 
 	// 删除本条
 	public boolean delete(Transaction thisTran) throws IOException, ClassNotFoundException {
-		Cell keyCell = thisNode.getRow(thisRowID).getCell(0);
+		Cell keyCell = null;
+		if (thisNode == null) {
+			return false;
+		} else {
+			keyCell = thisNode.getRow(thisRowID).getCell(0);
+		}
+
 		moveToNext(thisTran);
-		Cell nextCell = thisNode.getRow(thisRowID).getCell(0);
+
+		Cell nextCell = null;
+		if (thisNode != null) {
+			nextCell = thisNode.getRow(thisRowID).getCell(0);
+		} else {
+			nextCell = null;
+		}
+
 		aimTable.getRootNode(thisTran).deleteRow(keyCell, thisTran);
-		moveToUnpacked(thisTran, nextCell.getValue_s());
+		Node rootNode = aimTable.getRootNode(thisTran);
+		
+		if(rootNode.getFirstRow(thisTran) == null) {
+			thisNode = null;
+		}
+
+		if (thisNode != null) {
+			moveToUnpacked(thisTran, nextCell.getValue_s());
+		}
 		return true;
 	}
 
@@ -314,14 +350,13 @@ class TableCursor extends Cursor {
 
 	// 获取本条内容，字符串值
 	public List<String> getData() {
-		if(thisNode == null) {
+		if (thisNode == null) {
 			return new ArrayList<String>();
 		}
 		Row row = thisNode.getRow(thisRowID);
-		if(row == null) {
+		if (row == null) {
 			return new ArrayList<String>();
-		}
-		else {
+		} else {
 			return row.getStringList();
 		}
 //		return thisNode.getRow(thisRowID).getStringList();
@@ -350,7 +385,11 @@ class ViewCursor extends Cursor {
 		aimView = aView;
 		RowID = 0;
 	}
-
+	
+	public boolean isEmpty() {
+		return aimView == null;
+	}
+	
 	// 获取列类型
 	// 输入参数：columnName，列名。
 	public BasicType getColumnType(String columnName) {

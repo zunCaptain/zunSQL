@@ -112,9 +112,9 @@ public class Table implements TableReader, Serializable {
 
 	public Cursor createCursor(Transaction thistran) throws IOException, ClassNotFoundException {
 		
-		if(this.rootNodePage < 0) {
-			return null;
-		}
+//		if(this.rootNodePage < 0) {
+//			return null;
+//		}
 		
 		return new TableCursor(this, thistran); // NULL
 	}
