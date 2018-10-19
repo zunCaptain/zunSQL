@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sun.org.apache.bcel.internal.generic.I2F;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -109,6 +111,11 @@ public class Table implements TableReader, Serializable {
 	}
 
 	public Cursor createCursor(Transaction thistran) throws IOException, ClassNotFoundException {
+		
+		if(this.rootNodePage < 0) {
+			return null;
+		}
+		
 		return new TableCursor(this, thistran); // NULL
 	}
 
