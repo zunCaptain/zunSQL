@@ -32,7 +32,7 @@ public class Node {
     private List<Row> rowList;
 
     // 用于表示本树为几阶B树。
-    public final static int M = 3;
+    public static int M = 3;
 
     // 用于操作存储page
     private CacheMgr cacheManager;

@@ -30,7 +30,7 @@ public class App {
 		 * 
 		 */
 
-		DBInstance dbinstance = DBInstance.Open("test.db");
+		DBInstance dbinstance = DBInstance.Open("test.db", 5);
 		QueryResult result;
 		
 		result = dbinstance.Execute("create table student(stuno int primary key, name varchar,score double)");
@@ -40,10 +40,10 @@ public class App {
 		result = dbinstance.Execute("select * from student");
 		System.out.println(result.getRes());
 		
-		result = dbinstance.Execute("delete from student");
-		
-		result = dbinstance.Execute("select * from student");
-		System.out.println(result.getRes());
+//		result = dbinstance.Execute("delete from student");
+//		
+//		result = dbinstance.Execute("select * from student");
+//		System.out.println(result.getRes());
 
 //		result = dbinstance.Execute("update student set score=666 where stuno=2017005");
 //		

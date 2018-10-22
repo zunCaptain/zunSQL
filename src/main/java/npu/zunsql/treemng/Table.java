@@ -27,6 +27,10 @@ public class Table implements TableReader, Serializable {
 	protected LockType lock;
 
 	protected int rootNodePage;
+	
+//	protected int M;
+//	protected int MM = -1;
+	protected int pageID = -1;
 
 	// page层的Mgr，用于对Page层进行操作。
 	public CacheMgr cacheManager;
@@ -48,6 +52,11 @@ public class Table implements TableReader, Serializable {
 		obj.writeObject(columns);
 		obj.writeObject(lock);
 		obj.writeObject(rootNodePage);
+		
+		if(this.pageID == 0) {
+			obj.writeObject(Node.M);
+		}
+		
 		bytes = byt.toByteArray();
 		pageOne.getPageBuffer().rewind();
 		pageOne.getPageBuffer().put(bytes);
@@ -76,7 +85,12 @@ public class Table implements TableReader, Serializable {
 		this.columns = (List<Column>) objTable.readObject();
 		this.lock = (LockType) objTable.readObject();
 		this.rootNodePage = (int) objTable.readObject();
-
+		
+		if(pageID == 0) {
+			this.pageID = 0;
+			Node.M = (int) objTable.readObject();
+//			this.MM = Node.M;
+		}
 	}
 
 	protected Integer getTablePageID() {

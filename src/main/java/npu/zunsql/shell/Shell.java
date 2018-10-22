@@ -17,7 +17,7 @@ public class Shell
 	public static void main(String[] args) 
 	{
 		// TODO Auto-generated method stub
-		//´æ¶à¸öÊý¾Ý¿âµÄ¿âÃû
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½Ä¿ï¿½ï¿½ï¿½
 		DBInstance dbinstance[] = new DBInstance[10];
 		String[] DB= new String[10];
 	    String worked_DB = "";
@@ -27,15 +27,15 @@ public class Shell
 		while(true)
 		{
 		    System.out.print(printwords);
-		    //»ñÈ¡Ò»¸öÓÃ»§ÃüÁî
+		    //ï¿½ï¿½È¡Ò»ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½
 		    Scanner scan = new Scanner(System.in);
 		    String user_command = scan.nextLine();
-		    //ÃüÁîÊäÈë»Ø³µÅÐ¶Ï
+		    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø³ï¿½ï¿½Ð¶ï¿½
 		    if(user_command.length() == 0)
 		    {
 		    	continue;
 		    }
-		    //·ÖÎöÓÃ»§ÃüÁî
+		    //ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½
 		    switch(GetKeyword(user_command))
 		    {
 		        //.help
@@ -54,8 +54,8 @@ public class Shell
 		    	    {
 		    	    	DB[DB_num] = DBName;
 			    	    DB_num++;
-			    	    //´ò¿ªÊý¾Ý¿â
-			    	    dbinstance[CheckDBName(DBName, DB, DB_num)] = DBInstance.Open(DBName);
+			    	    //ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½
+//			    	    dbinstance[CheckDBName(DBName, DB, DB_num)] = DBInstance.Open(DBName);
 		    	    }
 		    	    worked_DB = DBName;
 		    	    printwords = '[' + worked_DB + "]>";
@@ -103,13 +103,13 @@ public class Shell
 			        }
 					break;
 		        default:
-			    //Æ¥ÅäÊ§°Ü
+			    //Æ¥ï¿½ï¿½Ê§ï¿½ï¿½
 		        {
 		        	if(user_command.charAt(0) == '.')
 		        	{
 		        		System.out.println(GetKeyword(user_command) + " is not defined.");
 		        	}
-		        	//Ö´ÐÐSQLÓï¾ä
+		        	//Ö´ï¿½ï¿½SQLï¿½ï¿½ï¿½
 		        	else
 		        	{
 		        		if(worked_DB == "")
@@ -117,7 +117,7 @@ public class Shell
 		        			System.out.println("please open a database firstly.");
 		        			break;
 		        		}
-		        		//¸ù¾Ý·µ»ØresultµÄ½á¹û
+		        		//ï¿½ï¿½ï¿½Ý·ï¿½ï¿½ï¿½resultï¿½Ä½ï¿½ï¿½
 		                result = dbinstance[CheckDBName(worked_DB, DB, DB_num)].Execute(user_command);   
 		                if(result != null)
 		                {
@@ -144,7 +144,7 @@ public class Shell
 		}
 		return -1;
 	}
-	//É¸Ñ¡ÃüÁîµÄ¹Ø¼ü×Ö¶Î
+	//É¸Ñ¡ï¿½ï¿½ï¿½ï¿½Ä¹Ø¼ï¿½ï¿½Ö¶ï¿½
 	public static String GetKeyword(String user_command)
 	{
 		if(user_command == "")
@@ -169,7 +169,7 @@ public class Shell
 			return user_command;
 		}
 	}
-	//ÕÒÊý¾Ý¿âÃû³Æ£¬Ã»ÓÐ½øÐÐÕýÎóÅÐ¶Ï
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½Æ£ï¿½Ã»ï¿½Ð½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½
 	public static String MakeCMD(String user_command) 
 	{
 	    String DBName = ""; 
@@ -188,12 +188,12 @@ public class Shell
 		}
 		if(flag != 1)
 		{
-			if(flag == 0)//Ê²Ã´¶¼Ã»ÓÐ¶Á³öÀ´µÄÇé¿ö
+			if(flag == 0)//Ê²Ã´ï¿½ï¿½Ã»ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			{
 				DBName = " #The string name is empty.";
-				//·µ»ØµÄ´íÎóÐÅÏ¢Ç°Ãæ°üº¬¿Õ¸ñ£¬È·±£²»»áºÍ¶ñÒâÃüÃû³åÍ»
+				//ï¿½ï¿½ï¿½ØµÄ´ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¸ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í»
 			}
-			else//ÃüÃû³öÏÖ¿Õ¸ñ
+			else//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¿Õ¸ï¿½
 			{
 				for(int j = user_command.length() - 1;j > user_command.length() - flag;j--)
 				{
@@ -214,14 +214,14 @@ public class Shell
 			if(user_command.charAt(user_command.length() - 3) != '.'
 					|| user_command.charAt(user_command.length() - 2) != 'd'
 					|| user_command.charAt(user_command.length() - 1) != 'b')
-			//Êý¾Ý¿âÃû³Æ¸ñÊ½²»¶Ô£¬×îºóÈýÎ»²»ÊÇ.db
+			//ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½Æ¸ï¿½Ê½ï¿½ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½.db
 			{
 				DBName = " #\"" + DBName + "\" is incorrect.";
 			}
 		}
 		return DBName; 
 	}
-	//°ïÖú
+	//ï¿½ï¿½ï¿½ï¿½
 	public static void HelpInfor() 
 	{
 		System.out.println(".open  *.db    Open a database");

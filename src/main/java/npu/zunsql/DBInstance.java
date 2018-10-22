@@ -23,8 +23,23 @@ public class DBInstance
 		this.vm = new VirtualMachine(db);
 	}
 
-	public static DBInstance Open(String name)
+	public static DBInstance Open(String name, int M)
 	{
+		Database db = null;
+
+		try {
+			db = new Database(name,M);
+		}catch(IOException ie){
+			ie.printStackTrace();
+			System.exit(-1);
+		}catch(ClassNotFoundException ce) {
+			ce.printStackTrace();
+			System.exit(-1);
+		}
+		return new DBInstance(db);
+	}
+	
+	public static DBInstance Open(String name) {
 		Database db = null;
 
 		try {

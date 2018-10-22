@@ -25,8 +25,7 @@ public class Database {
 		return dBName;
 	}
 
-	// 根据dbname构造数据库缓存对象
-	public Database(String name) throws IOException, ClassNotFoundException {
+	public Database(String name, int M) throws IOException, ClassNotFoundException {
 		dBName = name;
 		cacheManager = new CacheMgr(dBName);
 
@@ -40,15 +39,44 @@ public class Database {
 			master = new Table(0, cacheManager, initTran);
 			initTran.Commit();
 		} else {
+
+			if ((M < 3) || (M > 9) || (M % 2 == 0)) {
+				System.out.println("treemng存储数量在[3,9],并且为奇数");
+				System.exit(-1);
+			}
+
 			// 建立masterTable
 			Transaction initTran = beginWriteTrans();
-			addMaster(initTran);
+			addMaster(initTran, M);
 			initTran.Commit();
 		}
 	}
 
+	// 根据dbname构造数据库缓存对象
+	public Database(String name) throws IOException, ClassNotFoundException {
+//		dBName = name;
+//		cacheManager = new CacheMgr(dBName);
+//
+//		// 判断数据库是否为新建数据库，即pageid为0的一页是否被填充
+//		boolean dbisNew = false;
+//		dbisNew = cacheManager.isNew();
+//		if (!dbisNew) {
+//			Transaction initTran = beginReadTrans();
+//
+//			// 从page[0]解析master。
+//			master = new Table(0, cacheManager, initTran);
+//			initTran.Commit();
+//		} else {
+//			// 建立masterTable
+//			Transaction initTran = beginWriteTrans();
+//			addMaster(initTran);
+//			initTran.Commit();
+//		}
+		this(name, 3);
+	}
+
 	// 构造一个系统表
-	private boolean addMaster(Transaction initTran) throws IOException, ClassNotFoundException {
+	private boolean addMaster(Transaction initTran, int M) throws IOException, ClassNotFoundException {
 		// 添加master table
 		Column keyColumn = new Column(BasicType.String, "tableName", 0);
 		Column valueColumn = new Column(BasicType.Integer, "pageNumber", 1);
@@ -58,7 +86,7 @@ public class Database {
 		sList.add("pageNumber");
 		tList.add(BasicType.String);
 		tList.add(BasicType.Integer);
-		master = createTable("master", "tableName", sList, tList, initTran);
+		master = createTable("master", "tableName", sList, tList, initTran, M);
 
 		List<String> masterRow_s = new ArrayList<String>();
 		masterRow_s.add("master");
@@ -85,6 +113,85 @@ public class Database {
 	public Transaction beginWriteTrans() {
 		return new WriteTran(cacheManager.beginTransation("w"), cacheManager);
 	}
+	
+	// 根据传来的表名，主键以及其他的列名来新建一个表
+		public Table createTable(String tableName, String keyName, List<String> columnNameList, List<BasicType> tList,
+				Transaction thisTran, int M) throws IOException, ClassNotFoundException {
+			ByteBuffer tempBuffer = ByteBuffer.allocate(Page.PAGE_SIZE);
+
+			byte[] bytes = new byte[Page.PAGE_SIZE];
+			ByteArrayOutputStream byt = new ByteArrayOutputStream();
+
+			// 将表头信息和首节点信息存入ByteBuffer中 新建的表锁应该为什么锁
+			LockType lock = LockType.Shared;
+
+			List<Column> columns = new ArrayList<Column>();
+
+			// 整合columnlist并且将主键放置第一列
+			for (int i = 0; i < columnNameList.size(); i++) {
+				if (columnNameList.get(i).equals(keyName)) {
+					Column tempColumn = new Column(tList.get(i), columnNameList.get(i), 0);
+					columns.add(tempColumn);
+					break;
+				}
+			}
+
+			for (int i = 0; i < columnNameList.size(); i++) {
+				if (!columnNameList.get(i).equals(keyName)) {
+					Column tempColumn = new Column(tList.get(i), columnNameList.get(i), columns.size());
+					columns.add(tempColumn);
+//	                 break;
+				}
+			}
+
+			ObjectOutputStream obj = new ObjectOutputStream(byt);
+			obj.writeObject(tableName);
+
+			obj.writeObject(columns.get(0));
+			obj.writeObject(columns);
+
+			obj.writeObject(lock);
+			obj.writeObject(-1);
+			obj.writeObject(M);
+			
+			bytes = byt.toByteArray();
+			tempBuffer.put(bytes);
+
+			Page tablePage = new Page(tempBuffer);
+			byte[] bytess = new byte[Page.PAGE_SIZE];
+			tempBuffer.rewind();
+			tablePage.getPageBuffer().get(bytess, 0, tablePage.getPageBuffer().remaining());
+
+			cacheManager.writePage(thisTran.tranNum, tablePage);
+
+			// thisTran.Commit();
+			Integer pageID = tablePage.getPageID();
+
+			/*
+			 * Page mpage = cacheManager.readPage(thisTran.tranNum, tablePage.getPageID());
+			 * byte [] bytess=new byte[Page.PAGE_SIZE] ;
+			 * mpage.getPageBuffer().get(bytess,0,mpage.getPageBuffer().remaining());
+			 */
+			/*
+			 * //test/* ByteBuffer tBuffer = ByteBuffer.allocate(Page.PAGE_SIZE);
+			 * tBuffer.putInt(0, 123); Page tpage = new Page(tBuffer);
+			 * tpage.getPageBuffer().rewind(); int t = tpage.getPageBuffer().getInt(0);
+			 * cacheManager.writePage(thisTran.tranNum, tpage); thisTran.Commit(); Page
+			 * mpage = cacheManager.readPage(thisTran.tranNum, tpage.getPageID()); int ttt =
+			 * mpage.getPageBuffer().getInt(0);
+			 * 
+			 * /* 当表不是master表时，对master表进行插入
+			 */
+			if (!tableName.equals("master")) {
+				List<String> masterRow_s = new ArrayList<String>();
+				masterRow_s.add(tableName);
+				masterRow_s.add(pageID.toString());
+
+				Cursor masterCursor = master.createCursor(thisTran);
+				masterCursor.insert(thisTran, masterRow_s);
+			}
+			return new Table(pageID, cacheManager, thisTran); // NULL
+		}
 
 	// 根据传来的表名，主键以及其他的列名来新建一个表
 	public Table createTable(String tableName, String keyName, List<String> columnNameList, List<BasicType> tList,
