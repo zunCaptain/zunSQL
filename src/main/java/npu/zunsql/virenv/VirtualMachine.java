@@ -71,7 +71,7 @@ public class VirtualMachine {
 	public QueryResult run(List<Instruction> instructions) throws Exception {
 
 		for (Instruction cmd : instructions) {
-			// System.out.println(cmd.opCode+" "+cmd.p1+" "+cmd.p2+" "+cmd.p3);
+			//System.out.println(cmd.opCode+" "+cmd.p1+" "+cmd.p2+" "+cmd.p3);
 			run(cmd);
 		}
 		// isJoin= false;
@@ -382,6 +382,25 @@ public class VirtualMachine {
 		}
 	}
 
+	//根据joinIndex检测该条记录是否满足filter
+	private boolean check(int Index) throws IOException, ClassNotFoundException {
+		// 如果没有where子句，那么返回true，即对所有记录都执行操作
+		if (filters.size() == 0) {
+			return true;
+		}
+
+		UnionOperand ans;
+		ans = eval(filters, Index);
+		if (ans.getType() == BasicType.String) {
+			Util.log("where子句的表达式返回值不能为String");
+			return false;
+		} else if (Math.abs(Double.valueOf(ans.getValue())) < 1e-10) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
 	private void select() throws IOException, ClassNotFoundException {
 
 		// 构造结果集的表头
@@ -396,24 +415,36 @@ public class VirtualMachine {
 		if (isJoin) {
 
 			if (selected.get(0).getColumnName().equals("*")) {
-				result = joinResult;
-				result.setAffectedCount(result.getRes().size());
-				return;
+				for(int indexi = 0 ; indexi < joinResult.getRes().size(); ++ indexi)
+				{
+					if(check(indexi))
+					{
+						result.addRecord(joinResult.getRes().get(indexi));
+						result.addAffectedCount();
+					}
+					
+				}
+				return ;
+				
 			}
 			temp = joinResult.getHeaderString();
 
 			// 用于joinResult的循环匹配。
 			for (int k = 0; k < joinResult.getRes().size(); k++, joinIndex++) {
+				//此处应该检测joinResult.get(k)是否满足filter
+				if(check(k)){
 				List<String> ansRecord = new ArrayList<>();
 				for (int i = 0; i < temp.size(); i++) {
 					for (int j = 0; j < selected.size(); j++) {
 						if (selected.get(j).getColumnName().equals(temp.get(i))) {
+							
 							ansRecord.add(joinResult.getRes().get(k).get(i));
 							result.addAffectedCount();
 						}
 					}
 				}
 				result.addRecord(ansRecord);
+				}
 			}
 
 		} else {
@@ -609,7 +640,7 @@ public class VirtualMachine {
 	/**
 	 * eval的重载，在下层不提供视图机制的时候用于处理临时表。
 	 */
-	private UnionOperand eval(List<EvalDiscription> evalDiscriptions, int joinIndex) {
+	private UnionOperand eval(List<EvalDiscription> evalDiscriptions, int Index) {
 		Expression exp = new Expression();
 		List<String> infoJoin = joinResult.getHeaderString();
 
@@ -617,10 +648,13 @@ public class VirtualMachine {
 			if (evalDiscriptions.get(i).cmd == OpCode.Operand) {
 				if (evalDiscriptions.get(i).col_name != null) {
 
-					for (int j = 0; j < infoJoin.size(); i++) {
+					for (int j = 0; j < infoJoin.size(); j++) {
 						if (infoJoin.get(j).equals(evalDiscriptions.get(i).col_name)) {
-							exp.addOperand(new UnionOperand(joinResult.getHeader().get(j).getColumnTypeBasic(),
-									joinResult.getRes().get(joinIndex).get(j)));
+							//System.out.println(joinResult.getRes().get(Index).get(j));
+							//exp.addOperand(new UnionOperand(joinResult.getHeader().get(j).getColumnTypeBasic(),
+							//		joinResult.getRes().get(Index).get(j)));
+							exp.addOperand(new UnionOperand(BasicType.String,
+									joinResult.getRes().get(Index).get(j)));
 						}
 					}
 
@@ -639,6 +673,8 @@ public class VirtualMachine {
 	private void join(String tableName) throws IOException, ClassNotFoundException {
 		Table table = db.getTable(tableName, tran);
 		List<Column> fromTreeHead = new ArrayList<>();
+		//此处应该加入colnumType,之后见面商量一下
+		
 		table.getColumnsName().forEach(n -> fromTreeHead.add(new Column(n)));
 		Cursor cursor = db.getTable(tableName, tran).createCursor(tran);
 
