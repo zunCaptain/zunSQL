@@ -651,10 +651,10 @@ public class VirtualMachine {
 					for (int j = 0; j < infoJoin.size(); j++) {
 						if (infoJoin.get(j).equals(evalDiscriptions.get(i).col_name)) {
 							//System.out.println(joinResult.getRes().get(Index).get(j));
-							//exp.addOperand(new UnionOperand(joinResult.getHeader().get(j).getColumnTypeBasic(),
-							//		joinResult.getRes().get(Index).get(j)));
-							exp.addOperand(new UnionOperand(BasicType.String,
+							exp.addOperand(new UnionOperand(joinResult.getHeader().get(j).getColumnTypeBasic(),
 									joinResult.getRes().get(Index).get(j)));
+							//exp.addOperand(new UnionOperand(BasicType.String,
+									//joinResult.getRes().get(Index).get(j)));
 						}
 					}
 
@@ -676,6 +676,13 @@ public class VirtualMachine {
 		//此处应该加入colnumType,之后见面商量一下
 		
 		table.getColumnsName().forEach(n -> fromTreeHead.add(new Column(n)));
+		List<BasicType> types = table.getColumnsType();
+		
+		for(int i=0; i<types.size(); ++i){
+			fromTreeHead.get(i).ColumnType = types.get(i).toString();
+		}
+		
+		
 		Cursor cursor = db.getTable(tableName, tran).createCursor(tran);
 
 		if (joinResult == null) {
