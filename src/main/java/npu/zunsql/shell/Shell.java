@@ -17,7 +17,7 @@ public class Shell
 	public static void main(String[] args) 
 	{
 		// TODO Auto-generated method stub
-		//�������ݿ�Ŀ���
+		//set multi-DBInstance
 		DBInstance dbinstance[] = new DBInstance[10];
 		String[] DB= new String[10];
 	    String worked_DB = "";
@@ -27,15 +27,15 @@ public class Shell
 		while(true)
 		{
 		    System.out.print(printwords);
-		    //��ȡһ���û�����
+		    //input a CMD
 		    Scanner scan = new Scanner(System.in);
 		    String user_command = scan.nextLine();
-		    //��������س��ж�
+		    //check enter
 		    if(user_command.length() == 0)
 		    {
 		    	continue;
 		    }
-		    //�����û�����
+		    //analyse the user_command
 		    switch(GetKeyword(user_command))
 		    {
 		        //.help
@@ -43,7 +43,8 @@ public class Shell
 			   	    HelpInfor();
 		            break;
 		        //.open
-		        case ".open":		        
+		        case ".open":
+		        	//find the DBName
 		    	    String DBName = MakeCMD(user_command);
 		    	    if(DBName.charAt(0) == ' ')
 		    	    {
@@ -54,8 +55,8 @@ public class Shell
 		    	    {
 		    	    	DB[DB_num] = DBName;
 			    	    DB_num++;
-			    	    //�����ݿ�
-//			    	    dbinstance[CheckDBName(DBName, DB, DB_num)] = DBInstance.Open(DBName);
+			    	    //open db
+			    	    dbinstance[CheckDBName(DBName, DB, DB_num)] = DBInstance.Open(DBName);
 		    	    }
 		    	    worked_DB = DBName;
 		    	    printwords = '[' + worked_DB + "]>";
@@ -103,21 +104,22 @@ public class Shell
 			        }
 					break;
 		        default:
-			    //ƥ��ʧ��
+			    //unmatched 
 		        {
 		        	if(user_command.charAt(0) == '.')
 		        	{
 		        		System.out.println(GetKeyword(user_command) + " is not defined.");
 		        	}
-		        	//ִ��SQL���
+		        	//SQL
 		        	else
 		        	{
+		        		//check worked_DB
 		        		if(worked_DB == "")
 		        		{
 		        			System.out.println("please open a database firstly.");
 		        			break;
 		        		}
-		        		//���ݷ���result�Ľ��
+		        		//execute the SQL
 		                result = dbinstance[CheckDBName(worked_DB, DB, DB_num)].Execute(user_command);   
 		                if(result != null)
 		                {
@@ -133,6 +135,7 @@ public class Shell
 		    
 		}
 	}
+	//CheckDBName
 	public static int CheckDBName(String DBName, String[] DB, int DB_num) 
 	{
 		for(int i = 0;i < DB_num;i++)
@@ -142,9 +145,10 @@ public class Shell
 			    return i;	
 			}
 		}
+		//if DBName is not in the DB return -1
 		return -1;
 	}
-	//ɸѡ����Ĺؼ��ֶ�
+	//find the keywords in user_command
 	public static String GetKeyword(String user_command)
 	{
 		if(user_command == "")
@@ -169,7 +173,6 @@ public class Shell
 			return user_command;
 		}
 	}
-	//�����ݿ����ƣ�û�н��������ж�
 	public static String MakeCMD(String user_command) 
 	{
 	    String DBName = ""; 
@@ -188,12 +191,11 @@ public class Shell
 		}
 		if(flag != 1)
 		{
-			if(flag == 0)//ʲô��û�ж����������
+			if(flag == 0)
 			{
 				DBName = " #The string name is empty.";
-				//���صĴ�����Ϣǰ������ո�ȷ������Ͷ���������ͻ
 			}
-			else//�������ֿո�
+			else
 			{
 				for(int j = user_command.length() - 1;j > user_command.length() - flag;j--)
 				{
@@ -214,14 +216,13 @@ public class Shell
 			if(user_command.charAt(user_command.length() - 3) != '.'
 					|| user_command.charAt(user_command.length() - 2) != 'd'
 					|| user_command.charAt(user_command.length() - 1) != 'b')
-			//���ݿ����Ƹ�ʽ���ԣ������λ����.db
 			{
 				DBName = " #\"" + DBName + "\" is incorrect.";
 			}
 		}
 		return DBName; 
 	}
-	//����
+	//information
 	public static void HelpInfor() 
 	{
 		System.out.println(".open  *.db    Open a database");
