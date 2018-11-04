@@ -71,7 +71,7 @@ public class VirtualMachine {
 	public QueryResult run(List<Instruction> instructions) throws Exception {
 
 		for (Instruction cmd : instructions) {
-			//System.out.println(cmd.opCode+" "+cmd.p1+" "+cmd.p2+" "+cmd.p3);
+			System.out.println(cmd.opCode+" "+cmd.p1+" "+cmd.p2+" "+cmd.p3);
 			run(cmd);
 		}
 		// isJoin= false;
@@ -124,7 +124,7 @@ public class VirtualMachine {
 			break;
 
 		case AddCol:
-			columns.add(new Column(p1, p2));
+			columns.add(new Column(this.targetTable+"."+p1, p2));
 			break;
 
 		case BeginPK:
@@ -135,7 +135,9 @@ public class VirtualMachine {
 
 		case AddPK:
 			// 在只支持一个属性作为主键的条件下，直接对pkName赋值即可
-			pkName = p1;
+			if(p1.indexOf('.') == -1){
+				pkName = this.targetTable+"."+p1;
+			}
 			break;
 
 		case EndPK:
@@ -183,6 +185,9 @@ public class VirtualMachine {
 			break;
 
 		case AddItemCol:
+			if(p1.indexOf('.') == -1){
+				p1 = this.targetTable+"."+p1;
+			}
 			record.add(new AttrInstance(p1, p2, p3));
 
 		case EndItem:
@@ -207,6 +212,9 @@ public class VirtualMachine {
 			break;
 
 		case AddColSelect:
+			if(p1.indexOf('.') == -1){
+				p1 = this.targetTable+"."+p1;
+			}
 			selectedColumns.add(p1);
 			break;
 
@@ -234,6 +242,9 @@ public class VirtualMachine {
 
 		// 下面的代码设置update要更新的值，形式为colName=Expression
 		case Set:
+			if(p1.indexOf('.') == -1){
+				p1 = this.targetTable+"."+p1;
+			}
 			updateAttrs.add(p1);
 			break;
 
@@ -696,43 +707,44 @@ public class VirtualMachine {
 			}
 			return;
 		}
-
-		List<List<String>> resList = joinResult.getRes();
-		List<Column> resHead = joinResult.getHeader();
-		JoinMatch matchedJoin = checkUnion(resHead, fromTreeHead);
-		QueryResult copy = new QueryResult(matchedJoin.getJoinHead());
-
-		for (int i = 0; i < resList.size(); i++) {
-			List<String> tempRes = resList.get(i);
-			while (cursor != null) {
-				List<String> fromTreeString = cursor.getData();
-				List<String> copyTreeString = new ArrayList<>();
-				fromTreeString.forEach(n -> copyTreeString.add(n));
-
-				Iterator iterator = matchedJoin.getJoinUnder().keySet().iterator();
-				while (iterator.hasNext()) {
-					int nextKey = (Integer) iterator.next();
-					int nextValue = matchedJoin.getJoinUnder().get(nextKey);
-					String s1 = tempRes.get(nextKey);
-					String s2 = fromTreeString.get(nextValue);
-					if (!s1.equals(s2)) {
-						break;
-					} else {
-						copyTreeString.remove(nextValue);
+		
+		//List<List<String>> resList = joinResult.getRes();
+		//List<Column> resHead = joinResult.getHeader();
+		//JoinMatch matchedJoin = checkUnion(resHead, fromTreeHead);
+		//QueryResult copy = new QueryResult(matchedJoin.getJoinHead());
+		//得到join结果的头，即列表名
+		List<Column> joinHead = joinResult.getHeader();
+		int snglJoin = joinResult.getHeader().size();
+		table.getColumnsName().forEach(n -> joinHead.add(new Column(n)));
+		for(int ndx1=snglJoin; ndx1 < snglJoin+types.size(); ++ndx1){
+			joinHead.get(ndx1).ColumnType = types.get(ndx1-snglJoin).toString();
+		}
+		
+		//将两个表进行全连接，作为一个表进行判断
+		
+		QueryResult joinRes = new QueryResult(joinHead);
+		
+		for(int ndx1=0; ndx1<joinResult.getRes().size(); ++ndx1){
+			//for(int ndx2=0; ndx2<table.getColumnsName().size(); ++ndx2){
+				while(cursor != null){
+					List<String> snglRecord = new ArrayList<>();
+					System.out.println(joinResult.getRes().get(ndx1));
+					for(int arri=0; arri < joinResult.getRes().get(ndx1).size(); ++arri){
+						snglRecord.add(joinResult.getRes().get(ndx1).get(arri));
+					}
+					//joinResult.getRes().get(ndx1).forEach(n -> snglRecord.add(n));
+					for(int ndx3=0; ndx3<cursor.getData().size(); ++ndx3){
+						snglRecord.add(cursor.getData().get(ndx3));
+					}
+					joinRes.addRecord(snglRecord);
+					if(cursor.moveToNext(tran)==false){
+						cursor=null;
 					}
 				}
-
-				if (iterator.hasNext()) {
-					List<String> line = new ArrayList<>();
-					tempRes.forEach(n -> line.add(n));
-					copyTreeString.forEach(n -> line.add(n));
-					copy.getRes().add(line);
-				}
-
-				cursor.moveToNext(tran);
-			}
+				cursor = db.getTable(tableName, tran).createCursor(tran);
+			//}
 		}
-		joinResult = copy;
+		joinResult = joinRes;
 	}
 
 	public JoinMatch checkUnion(List<Column> head1, List<Column> head2) {
