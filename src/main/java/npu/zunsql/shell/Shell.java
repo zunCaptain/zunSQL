@@ -53,7 +53,12 @@ public class Shell
 		    	    }
 		    	    if(CheckDBName(DBName, DB, DB_num) == -1)
 		    	    {
-		    	    	DB[DB_num] = DBName;
+		    	    	//DB is full
+		    	    	if(DB_num == 10)
+		    	    	{
+		    	    		break;
+		    	    	}
+		    	    	DB[GetDBNo(DBName, DB)] = DBName;
 			    	    DB_num++;
 			    	    //open db
 			    	    dbinstance[CheckDBName(DBName, DB, DB_num)] = DBInstance.Open(DBName);
@@ -77,11 +82,27 @@ public class Shell
 		        	else
 		        	{
 		        		dbinstance[flag].Close();
-		        		DB[flag] = "";
+		        		DB[flag] = null;
+		        		dbinstance[flag] = null;
 			        	if(DBName.equals(worked_DB))
 			        	{
-			        		printwords = "zunSQL>";
-			        		worked_DB = "";
+			        		for(int i = 0;i < 10;i++)
+			        		{
+		        				worked_DB = DB[i];
+			        			if(DB[i] != null)
+			        			{
+	                                break;
+			        			}
+			        		}
+			        		if(worked_DB == null) 
+			        		{
+			        			printwords = "zunSQL>";
+				        		worked_DB = "";
+			        		}
+			        		else
+			        		{
+				        		printwords = '[' + worked_DB + "]>";
+			        		}
 			        	}
 		        	}
 				    break;
@@ -123,7 +144,7 @@ public class Shell
 		                result = dbinstance[CheckDBName(worked_DB, DB, DB_num)].Execute(user_command);   
 		                if(result != null)
 		                {
-		                	if(result.getHeader() != null)
+		                	if(user_command.toLowerCase().startsWith("select"))
 		                	{
 			                	System.out.println(result.getRes());
 		                	}
@@ -135,11 +156,26 @@ public class Shell
 		    
 		}
 	}
+	public static int GetDBNo(String DBName, String[] DB)
+	{
+		for(int i = 0;i < 10;i++)
+		{
+			if(DB[i] == null)
+			{
+			    return i;	
+			}
+		}
+		return -1;
+	}
 	//CheckDBName
 	public static int CheckDBName(String DBName, String[] DB, int DB_num) 
 	{
-		for(int i = 0;i < DB_num;i++)
+		for(int i = 0;i < 10;i++)
 		{
+			if(DB[i]==null)
+			{
+				continue;
+			}
 			if(DB[i].equals(DBName))
 			{
 			    return i;	
