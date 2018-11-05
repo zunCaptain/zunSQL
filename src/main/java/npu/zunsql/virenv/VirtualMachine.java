@@ -124,7 +124,7 @@ public class VirtualMachine {
 			break;
 
 		case AddCol:
-			columns.add(new Column(this.targetTable+"."+p1, p2));
+			columns.add(new Column(p1, p2));
 			break;
 
 		case BeginPK:
@@ -135,9 +135,7 @@ public class VirtualMachine {
 
 		case AddPK:
 			// 在只支持一个属性作为主键的条件下，直接对pkName赋值即可
-			if(p1.indexOf('.') == -1){
-				pkName = this.targetTable+"."+p1;
-			}
+			pkName = p1;
 			break;
 
 		case EndPK:
@@ -185,9 +183,6 @@ public class VirtualMachine {
 			break;
 
 		case AddItemCol:
-			if(p1.indexOf('.') == -1){
-				p1 = this.targetTable+"."+p1;
-			}
 			record.add(new AttrInstance(p1, p2, p3));
 
 		case EndItem:
@@ -212,9 +207,6 @@ public class VirtualMachine {
 			break;
 
 		case AddColSelect:
-			if(p1.indexOf('.') == -1){
-				p1 = this.targetTable+"."+p1;
-			}
 			selectedColumns.add(p1);
 			break;
 
@@ -242,9 +234,6 @@ public class VirtualMachine {
 
 		// 下面的代码设置update要更新的值，形式为colName=Expression
 		case Set:
-			if(p1.indexOf('.') == -1){
-				p1 = this.targetTable+"."+p1;
-			}
 			updateAttrs.add(p1);
 			break;
 

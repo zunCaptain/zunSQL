@@ -35,14 +35,23 @@ public class App {
 		
 		result = dbinstance.Execute("create table student(stuno int primary key, sname varchar,score double,course varchar)");
 		result = dbinstance.Execute("create table teacher(teano int primary key, tname varchar,Tcourse varchar)");
+		result = dbinstance.Execute("create table courseTable(courseName varchar primary key, courseNumber int)");
+
 		result = dbinstance.Execute("insert into student (stuno, sname, score, course) values (2017005, 'zhang', 98.0+1, 'OS')");
 		result = dbinstance.Execute("insert into student (stuno, sname, score, course) values (2017004, 'li', 80, 'DS')");		result = dbinstance.Execute("insert into student (stuno, name, score) values (2017004, 'li', 66)");
 		result = dbinstance.Execute("insert into teacher(teano, tname ,Tcourse) values (2017004, 'jun',  'DS')");		
 		result = dbinstance.Execute("insert into teacher(teano, tname ,Tcourse) values (2017006, 'zhang',  'c')");
+		result = dbinstance.Execute("insert into courseTable(courseName,courseNumber) values ('OS',1024)");
+
+		//result = dbinstance.Execute("create table student(stuno int primary key, name varchar ,score double,course varchar)");
+		///result = dbinstance.Execute("insert into student (stuno, name, score, course) values (2017006, 'ZHANG', 95, 'KS')");
+		//result = dbinstance.Execute("insert into student (stuno, name, score, course) values (2017004, 'LI', 91, 'DOS')");				
+		//result = dbinstance.Execute("update student set score=666 where stuno=2017005");
+		
 		//result = dbinstance.Execute("select * from student where score>80 ");
 		//System.out.println("select * where name =zhang:   "+result.getRes());
 		//result = dbinstance.Execute("select stuno,score from student where stuno='2017004' and name ='li'");
-		result = dbinstance.Execute("select student.sname,student.course from student,teacher where student.sname=teacher.tname");
+		result = dbinstance.Execute("select sname,course,courseNumber from student,teacher,courseTable where sname=tname and course=courseName");
 		System.out.println(result.getRes());
 		
 //		result = dbinstance.Execute("delete from student");
