@@ -28,6 +28,11 @@ public class CacheMgr {
 	protected List<Integer> unusedList_PageID = null;
 	private ReadWriteLock lock;
 
+//	protected UserTransaction userTrans = null;
+	protected Map<Integer, UserTransaction> userTransMgr = null;
+//	protected List<Page> userTransPages = null;
+	protected List<Integer> userTransList = null;
+
 	public CacheMgr(String dbName) {
 		this.dbName = dbName;
 		this.cacheList = new ArrayList<Page>();
@@ -36,6 +41,11 @@ public class CacheMgr {
 		this.transOnPage = new HashMap<Integer, List<Page>>();
 		this.unusedList_PageID = new ArrayList<Integer>();
 		this.lock = new ReentrantReadWriteLock();
+
+//		this.userTrans = null;
+		this.userTransMgr = new HashMap<Integer, UserTransaction>();
+//		this.userTransPages = null;
+		this.userTransList = null;
 	}
 
 	public boolean isNew() {
@@ -208,6 +218,16 @@ public class CacheMgr {
 		return trans.transID;
 	}
 
+	public int beginUserTransation() {
+		UserTransaction trans = new UserTransaction(lock);
+		trans.begin();
+//		userTrans = trans;
+//		this.userTransPages = new ArrayList<>();
+		this.userTransList = new ArrayList<>();
+		this.userTransMgr.put(trans.transID, trans);
+		return trans.transID;
+	}
+
 	/**
 	 * commit the transaction and update the cache 1.get the transonPage 2.read the
 	 * page which will be changed and record it to the journal 3.if hit cache , then
@@ -293,6 +313,20 @@ public class CacheMgr {
 //        this.transMgr.remove(transID);
 //        this.transOnPage.remove(transID);
 		trans.commit();
+		
+		if(userTransList != null) {
+			userTransList.add(transID);
+		}
+		
+		return true;
+	}
+
+	public boolean commitUserTransation(int transID) throws IOException {
+		UserTransaction trans = userTransMgr.get(transID);
+
+		trans.commit();
+		this.userTransList = null;
+
 		return true;
 	}
 
@@ -375,6 +409,25 @@ public class CacheMgr {
 		return true;
 	}
 
+	public boolean rollbackUserTransation(int transID) {
+
+		System.out.println("This is transID need rollback: " + transID);
+
+		UserTransaction trans = userTransMgr.get(transID);
+
+		int index = (int) (userTransList.size()) - 1;
+		for (; index >= 0; --index) {
+			rollbackTransation(userTransList.get(index));
+		}
+
+		trans.rollback();
+		this.userTransMgr.remove(transID);
+		this.userTransList = null;
+//		this.userTransPages = null;
+
+		return true;
+	}
+
 	/**
 	 * use transID to read pageID and return page_copy if this page has been stored
 	 * in the cacheList ,then directly return it else try to get it from file: if
@@ -442,6 +495,11 @@ public class CacheMgr {
 		} else {
 			writePageList.add(tempBuffer);
 		}
+
+//		if (userTransPages != null) {
+//			userTransPages.add(tempBuffer);
+//		}
+
 		return true;
 	}
 

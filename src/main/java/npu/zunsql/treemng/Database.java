@@ -114,6 +114,12 @@ public class Database {
 		return new WriteTran(cacheManager.beginTransation("w"), cacheManager);
 	}
 	
+	//开始一个用户事务
+	public Transaction beginUserTrans() {
+//		return new UserTran(cacheManager.beginTransation(), thisCacheMgr);
+		return new UserTran(cacheManager.beginUserTransation(), cacheManager);
+	}
+	
 	// 根据传来的表名，主键以及其他的列名来新建一个表
 		public Table createTable(String tableName, String keyName, List<String> columnNameList, List<BasicType> tList,
 				Transaction thisTran, int M) throws IOException, ClassNotFoundException {

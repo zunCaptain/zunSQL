@@ -70,11 +70,11 @@ public class Transaction
     {
         if(this.WR)
         {
-            //this.lock.writeLock().unlock();
+//            this.lock.writeLock().unlock();
         }
         else
         {
-            //this.lock.readLock().unlock();
+//            this.lock.readLock().unlock();
         }
 //        File journal = new File(Integer.toString(this.transID)+SUFFIX_JOURNAL);
 //        if(journal.exists()&&journal.isFile())
