@@ -56,9 +56,15 @@ public class DBInstance
 
 	public QueryResult Execute(String statement)
 	{
-		//定义一个List<Relation>，将parse()返回的Relation对象填入
+		//瀹氫箟涓�涓狶ist<Relation>锛屽皢parse()杩斿洖鐨凴elation瀵硅薄濉叆
 		List<Relation> statements = new ArrayList<Relation>();
-		statements.add(Parser.parse(statement));
+		try{
+			statements.add(Parser.parse(statement));
+		}catch(Exception e)
+		{
+			System.out.println("Syntax error");
+			return null;
+		}
 
 		List<Instruction> Ins = CodeGenerator.GenerateByteCode(statements);
 		try {
