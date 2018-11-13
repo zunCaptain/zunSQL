@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CodeGenerator {
+//	static Boolean inTransaction = false;
     public static final List<Instruction> GenerateByteCode(List<Relation> statements) {
         Integer selectTableName = 0;
         List<Instruction> ret = new ArrayList<>();
@@ -15,12 +16,12 @@ public class CodeGenerator {
         for (Relation statement : statements) {
             if (statement instanceof Begin) {
                 inTransaction = true;
-                ret.add(new Instruction(OpCode.Transaction, null, null, null));
+                ret.add(new Instruction(OpCode.Begin, null, null, null));
                 continue;
             }
             if (statement instanceof Commit) {
                 inTransaction = false;
-                ret.add(new Instruction(OpCode.Commit, null, null, null));
+                ret.add(new Instruction(OpCode.UserCommit, null, null, null));
                 continue;
             }
             if (statement instanceof Rollback) {

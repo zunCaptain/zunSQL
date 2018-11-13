@@ -1,7 +1,8 @@
 package npu.zunsql.virenv;
 
 public enum OpCode{
-
+	Begin,
+	UserCommit,
     Transaction,
     Commit,
     Rollback,

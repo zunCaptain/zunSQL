@@ -1,11 +1,13 @@
 package npu.zunsql.virenv;
 
 import npu.zunsql.treemng.*;
+//import sun.security.provider.JavaKeyStore.CaseExactJKS;
+//import sun.security.provider.JavaKeyStore.CaseExactJKS;
 
 import java.io.IOException;
 import java.util.*;
 
-import javax.sound.sampled.Port.Info;
+//import javax.sound.sampled.Port.Info;
 
 public class VirtualMachine {
 	// 作为过滤器来对记录进行筛选
@@ -34,6 +36,7 @@ public class VirtualMachine {
 	private QueryResult joinResult;
 	// 事务句柄
 	private Transaction tran;
+	private Transaction usertran;
 
 	private boolean isJoin = false;
 	private int joinIndex = 0;
@@ -71,7 +74,7 @@ public class VirtualMachine {
 	public QueryResult run(List<Instruction> instructions) throws Exception {
 
 		for (Instruction cmd : instructions) {
-			System.out.println(cmd.opCode+" "+cmd.p1+" "+cmd.p2+" "+cmd.p3);
+			System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
 			run(cmd);
 		}
 		// isJoin= false;
@@ -93,6 +96,20 @@ public class VirtualMachine {
 			// 这里不做任何处理，因为上一层并没有交给本层事务类型
 			break;
 
+		case Begin:
+			usertran = db.beginUserTrans();
+			break;
+
+		case UserCommit:
+			try {
+				usertran.Commit();
+			} catch (IOException e) {
+				Util.log("提交失败");
+				throw e;
+			}
+			usertran = null;
+			break;
+
 		case Commit:
 			try {
 				tran.Commit();
@@ -103,7 +120,8 @@ public class VirtualMachine {
 			break;
 
 		case Rollback:
-			tran.RollBack();
+			usertran.RollBack();
+			usertran = null;
 			try {
 				db = new Database(db.getDatabaseName());
 			} catch (IOException ie) {
@@ -382,7 +400,7 @@ public class VirtualMachine {
 		}
 	}
 
-	//根据joinIndex检测该条记录是否满足filter
+	// 根据joinIndex检测该条记录是否满足filter
 	private boolean check(int Index) throws IOException, ClassNotFoundException {
 		// 如果没有where子句，那么返回true，即对所有记录都执行操作
 		if (filters.size() == 0) {
@@ -400,7 +418,7 @@ public class VirtualMachine {
 			return true;
 		}
 	}
-	
+
 	private void select() throws IOException, ClassNotFoundException {
 
 		// 构造结果集的表头
@@ -415,35 +433,33 @@ public class VirtualMachine {
 		if (isJoin) {
 
 			if (selected.get(0).getColumnName().equals("*")) {
-				for(int indexi = 0 ; indexi < joinResult.getRes().size(); ++ indexi)
-				{
-					if(check(indexi))
-					{
+				for (int indexi = 0; indexi < joinResult.getRes().size(); ++indexi) {
+					if (check(indexi)) {
 						result.addRecord(joinResult.getRes().get(indexi));
 						result.addAffectedCount();
 					}
-					
+
 				}
-				return ;
-				
+				return;
+
 			}
 			temp = joinResult.getHeaderString();
 
 			// 用于joinResult的循环匹配。
 			for (int k = 0; k < joinResult.getRes().size(); k++, joinIndex++) {
-				//此处应该检测joinResult.get(k)是否满足filter
-				if(check(k)){
-				List<String> ansRecord = new ArrayList<>();
-				for (int i = 0; i < temp.size(); i++) {
-					for (int j = 0; j < selected.size(); j++) {
-						if (selected.get(j).getColumnName().equals(temp.get(i))) {
-							
-							ansRecord.add(joinResult.getRes().get(k).get(i));
-							result.addAffectedCount();
+				// 此处应该检测joinResult.get(k)是否满足filter
+				if (check(k)) {
+					List<String> ansRecord = new ArrayList<>();
+					for (int i = 0; i < temp.size(); i++) {
+						for (int j = 0; j < selected.size(); j++) {
+							if (selected.get(j).getColumnName().equals(temp.get(i))) {
+
+								ansRecord.add(joinResult.getRes().get(k).get(i));
+								result.addAffectedCount();
+							}
 						}
 					}
-				}
-				result.addRecord(ansRecord);
+					result.addRecord(ansRecord);
 				}
 			}
 
@@ -481,7 +497,7 @@ public class VirtualMachine {
 //        }
 
 		Cursor p = db.getTable(targetTable, tran).createCursor(tran);
-		
+
 		while (!p.isEmpty()) {
 			if (check(p)) {
 				if (p.delete(tran)) {
@@ -650,11 +666,11 @@ public class VirtualMachine {
 
 					for (int j = 0; j < infoJoin.size(); j++) {
 						if (infoJoin.get(j).equals(evalDiscriptions.get(i).col_name)) {
-							//System.out.println(joinResult.getRes().get(Index).get(j));
+							// System.out.println(joinResult.getRes().get(Index).get(j));
 							exp.addOperand(new UnionOperand(joinResult.getHeader().get(j).getColumnTypeBasic(),
 									joinResult.getRes().get(Index).get(j)));
-							//exp.addOperand(new UnionOperand(BasicType.String,
-									//joinResult.getRes().get(Index).get(j)));
+							// exp.addOperand(new UnionOperand(BasicType.String,
+							// joinResult.getRes().get(Index).get(j)));
 						}
 					}
 
@@ -673,16 +689,15 @@ public class VirtualMachine {
 	private void join(String tableName) throws IOException, ClassNotFoundException {
 		Table table = db.getTable(tableName, tran);
 		List<Column> fromTreeHead = new ArrayList<>();
-		//此处应该加入colnumType,之后见面商量一下
-		
+		// 此处应该加入colnumType,之后见面商量一下
+
 		table.getColumnsName().forEach(n -> fromTreeHead.add(new Column(n)));
 		List<BasicType> types = table.getColumnsType();
-		
-		for(int i=0; i<types.size(); ++i){
+
+		for (int i = 0; i < types.size(); ++i) {
 			fromTreeHead.get(i).ColumnType = types.get(i).toString();
 		}
-		
-		
+
 		Cursor cursor = db.getTable(tableName, tran).createCursor(tran);
 
 		if (joinResult == null) {
@@ -696,42 +711,42 @@ public class VirtualMachine {
 			}
 			return;
 		}
-		
-		//List<List<String>> resList = joinResult.getRes();
-		//List<Column> resHead = joinResult.getHeader();
-		//JoinMatch matchedJoin = checkUnion(resHead, fromTreeHead);
-		//QueryResult copy = new QueryResult(matchedJoin.getJoinHead());
-		//得到join结果的头，即列表名
+
+		// List<List<String>> resList = joinResult.getRes();
+		// List<Column> resHead = joinResult.getHeader();
+		// JoinMatch matchedJoin = checkUnion(resHead, fromTreeHead);
+		// QueryResult copy = new QueryResult(matchedJoin.getJoinHead());
+		// 得到join结果的头，即列表名
 		List<Column> joinHead = joinResult.getHeader();
 		int snglJoin = joinResult.getHeader().size();
 		table.getColumnsName().forEach(n -> joinHead.add(new Column(n)));
-		for(int ndx1=snglJoin; ndx1 < snglJoin+types.size(); ++ndx1){
-			joinHead.get(ndx1).ColumnType = types.get(ndx1-snglJoin).toString();
+		for (int ndx1 = snglJoin; ndx1 < snglJoin + types.size(); ++ndx1) {
+			joinHead.get(ndx1).ColumnType = types.get(ndx1 - snglJoin).toString();
 		}
-		
-		//将两个表进行全连接，作为一个表进行判断
-		
+
+		// 将两个表进行全连接，作为一个表进行判断
+
 		QueryResult joinRes = new QueryResult(joinHead);
-		
-		for(int ndx1=0; ndx1<joinResult.getRes().size(); ++ndx1){
-			//for(int ndx2=0; ndx2<table.getColumnsName().size(); ++ndx2){
-				while(cursor != null){
-					List<String> snglRecord = new ArrayList<>();
-					System.out.println(joinResult.getRes().get(ndx1));
-					for(int arri=0; arri < joinResult.getRes().get(ndx1).size(); ++arri){
-						snglRecord.add(joinResult.getRes().get(ndx1).get(arri));
-					}
-					//joinResult.getRes().get(ndx1).forEach(n -> snglRecord.add(n));
-					for(int ndx3=0; ndx3<cursor.getData().size(); ++ndx3){
-						snglRecord.add(cursor.getData().get(ndx3));
-					}
-					joinRes.addRecord(snglRecord);
-					if(cursor.moveToNext(tran)==false){
-						cursor=null;
-					}
+
+		for (int ndx1 = 0; ndx1 < joinResult.getRes().size(); ++ndx1) {
+			// for(int ndx2=0; ndx2<table.getColumnsName().size(); ++ndx2){
+			while (cursor != null) {
+				List<String> snglRecord = new ArrayList<>();
+				System.out.println(joinResult.getRes().get(ndx1));
+				for (int arri = 0; arri < joinResult.getRes().get(ndx1).size(); ++arri) {
+					snglRecord.add(joinResult.getRes().get(ndx1).get(arri));
 				}
-				cursor = db.getTable(tableName, tran).createCursor(tran);
-			//}
+				// joinResult.getRes().get(ndx1).forEach(n -> snglRecord.add(n));
+				for (int ndx3 = 0; ndx3 < cursor.getData().size(); ++ndx3) {
+					snglRecord.add(cursor.getData().get(ndx3));
+				}
+				joinRes.addRecord(snglRecord);
+				if (cursor.moveToNext(tran) == false) {
+					cursor = null;
+				}
+			}
+			cursor = db.getTable(tableName, tran).createCursor(tran);
+			// }
 		}
 		joinResult = joinRes;
 	}
