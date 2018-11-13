@@ -5,7 +5,7 @@ import npu.zunsql.cache.CacheMgr;
 import npu.zunsql.cache.Page;
 import npu.zunsql.cache.Transaction;
 import npu.zunsql.virenv.QueryResult;
-import sun.misc.Cache;
+//import sun.misc.Cache;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -52,16 +52,16 @@ public class App {
 		//System.out.println("select * where name =zhang:   "+result.getRes());
 		//result = dbinstance.Execute("select stuno,score from student where stuno='2017004' and name ='li'");
 		
-//		result = dbinstance.Execute("begin transaction");
+		result = dbinstance.Execute("begin transaction");
 		
 		result = dbinstance.Execute("select sname,course,courseNumber from student,teacher,courseTable where sname=tname and course=courseName");
 		System.out.println(result.getRes());
 		
 		result = dbinstance.Execute("insert into courseTable(courseName,courseNumber) values ('JK',2048)");
 		
-//		result = dbinstance.Execute("commit");
+		result = dbinstance.Execute("rollback");
 		
-		result = dbinstance.Execute("select * from courseNumber");
+		result = dbinstance.Execute("select courseNumber from courseTable");
 		System.out.println(result.getRes());
 		
 //		result = dbinstance.Execute("delete from student");

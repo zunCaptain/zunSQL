@@ -92,6 +92,7 @@ public class VirtualMachine {
 		switch (opCode) {
 		// 下面是关于事务的处理代码
 		case Transaction:
+			ConditonClear();
 			// 如果这里不能提供Transaction的类型，那么只能在execute的时候由虚拟机来自动推断
 			// 这里不做任何处理，因为上一层并没有交给本层事务类型
 			break;
@@ -113,6 +114,7 @@ public class VirtualMachine {
 		case Commit:
 			try {
 				tran.Commit();
+				ConditonClear();
 			} catch (IOException e) {
 				Util.log("提交失败");
 				throw e;
@@ -185,7 +187,7 @@ public class VirtualMachine {
 		// 下面是选择操作，这是个延时操作
 		case Select:
 			activity = Activity.Select;
-			targetTable = p3;
+			//targetTable = p3;
 
 			break;
 
@@ -299,9 +301,16 @@ public class VirtualMachine {
 		columnsReadOnly = true;
 		selectedColumnsReadOnly = true;
 		suvReadOnly = true;
+		filters.clear();
 
 		// tran = null;
 		// result = null;
+		selectedColumns.clear(); 
+		record.clear();
+		columns.clear();
+		updateAttrs.clear();
+		updateValues.clear();
+		singleUpdateValue.clear();
 		activity = null;
 		targetTable = null;
 		joinResult = null;
