@@ -35,7 +35,7 @@ public class Transaction
                 if(!journal.exists())
                 {
                     Boolean bool = journal.createNewFile();
-                    System.out.println("File created: "+bool);
+//                    System.out.println("File created: "+bool);
                 }
             }
             catch (IOException e)

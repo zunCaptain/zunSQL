@@ -87,7 +87,7 @@ public class CacheMgr {
 						} else
 							Page.unusedID.add(unusedListBuffer.getInt());
 					}
-					System.out.println("Load the database file successfully");
+//					System.out.println("Load the database file successfully");
 					return false;
 				}
 				// version and magic is not right,so delete the file and create a new one
@@ -121,14 +121,14 @@ public class CacheMgr {
 				fileHeader.putInt(0, 1); // version
 				fileHeader.putInt(4, 123); // magic number
 				fileHeader.rewind();
-				System.out.println("Begin");
+//				System.out.println("Begin");
 				// System.out.println("version:"+fileHeader.getInt(0));
 				// System.out.println("magic:"+fileHeader.getInt(4));
 				fc.write(fileHeader, 0);
 				ByteBuffer unusedListBuffer = ByteBuffer.allocate(CacheMgr.UNUSEDLISTSIZE);
 				fc.write(unusedListBuffer, CacheMgr.FILEHEADERSIZE);
 				// System.out.println("This is ret:" + ret);
-				System.out.println("Create new database successfully");
+//				System.out.println("Create new database successfully");
 				fc.close();
 				fin.close();
 			} catch (FileNotFoundException e) {
@@ -316,6 +316,9 @@ public class CacheMgr {
 		
 		if(userTransList != null) {
 			userTransList.add(transID);
+		}else {
+			File journal_file = new File(Integer.toString(transID) + "-journal");
+			journal_file.delete();
 		}
 		
 		return true;
@@ -325,6 +328,13 @@ public class CacheMgr {
 		UserTransaction trans = userTransMgr.get(transID);
 
 		trans.commit();
+		int index = (int) (userTransList.size()) - 1;
+				
+		for (; index >= 0; --index) {
+			File journal_file = new File(Integer.toString(userTransList.get(index)) + "-journal");
+			journal_file.delete();
+		}
+		
 		this.userTransList = null;
 
 		return true;
@@ -334,13 +344,13 @@ public class CacheMgr {
 	 * roll back the transaction lease the lock and do not affect cache
 	 **/
 	public boolean rollbackTransation(int transID) {
-		System.out.println("This is transID:" + transID);
+//		System.out.println("This is transID:" + transID);
 		Transaction trans = transMgr.get(transID);
 		FileChannel fc = null;
 		Page tempPage = null;
 		if (trans.WR) {
 			File journal_file = new File(Integer.toString(transID) + "-journal");
-			System.out.println("This is file length:" + journal_file.length());
+//			System.out.println("This is file length:" + journal_file.length());
 			int num = (int) (journal_file.length() / 1028);
 			int i = 0;
 			File db_file = new File(this.dbName);
@@ -411,13 +421,16 @@ public class CacheMgr {
 
 	public boolean rollbackUserTransation(int transID) {
 
-		System.out.println("This is transID need rollback: " + transID);
+//		System.out.println("This is transID need rollback: " + transID);
 
 		UserTransaction trans = userTransMgr.get(transID);
 
 		int index = (int) (userTransList.size()) - 1;
 		for (; index >= 0; --index) {
 			rollbackTransation(userTransList.get(index));
+			
+			File journal_file = new File(Integer.toString(userTransList.get(index)) + "-journal");
+			journal_file.delete();
 		}
 
 		trans.rollback();

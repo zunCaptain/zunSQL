@@ -31,7 +31,7 @@ class WriteTran extends Transaction {
 	}
 
 	public boolean Commit() throws IOException {
-		System.out.print(tranNum);
+//		System.out.print(tranNum);
 		cacheMagr.commitTransation(tranNum);
 		return true;
 	}

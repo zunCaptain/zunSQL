@@ -74,7 +74,7 @@ public class VirtualMachine {
 	public QueryResult run(List<Instruction> instructions) throws Exception {
 
 		for (Instruction cmd : instructions) {
-			System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
+			//System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
 			run(cmd);
 		}
 		// isJoin= false;
@@ -741,7 +741,7 @@ public class VirtualMachine {
 			// for(int ndx2=0; ndx2<table.getColumnsName().size(); ++ndx2){
 			while (cursor != null) {
 				List<String> snglRecord = new ArrayList<>();
-				System.out.println(joinResult.getRes().get(ndx1));
+//				System.out.println(joinResult.getRes().get(ndx1));
 				for (int arri = 0; arri < joinResult.getRes().get(ndx1).size(); ++arri) {
 					snglRecord.add(joinResult.getRes().get(ndx1).get(arri));
 				}
