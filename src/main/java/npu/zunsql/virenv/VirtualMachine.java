@@ -47,6 +47,8 @@ public class VirtualMachine {
 	private boolean selectedColumnsReadOnly;
 	private Database db;
 
+	private boolean isUserTransaction = false;
+
 	public VirtualMachine(Database pdb) {
 		recordReadOnly = true;
 		columnsReadOnly = true;
@@ -69,12 +71,15 @@ public class VirtualMachine {
 
 		pkName = null;
 		db = pdb;
+
+		usertran = null;
+		isUserTransaction = false;
 	}
 
 	public QueryResult run(List<Instruction> instructions) throws Exception {
 
 		for (Instruction cmd : instructions) {
-			//System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
+//			 System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
 			run(cmd);
 		}
 		// isJoin= false;
@@ -98,22 +103,27 @@ public class VirtualMachine {
 			break;
 
 		case Begin:
-			usertran = db.beginUserTrans();
+//			usertran = db.beginUserTrans();
+			tran = db.beginWriteTrans();
+			isUserTransaction = true;
 			break;
 
 		case UserCommit:
 			try {
-				usertran.Commit();
+				tran.Commit();
 			} catch (IOException e) {
 				Util.log("提交失败");
 				throw e;
 			}
-			usertran = null;
+			tran = null;
+			isUserTransaction = false;
 			break;
 
 		case Commit:
 			try {
-				tran.Commit();
+				if (!isUserTransaction) {
+					tran.Commit();
+				}
 				ConditonClear();
 			} catch (IOException e) {
 				Util.log("提交失败");
@@ -122,9 +132,12 @@ public class VirtualMachine {
 			break;
 
 		case Rollback:
-			usertran.RollBack();
-			usertran = null;
+//			usertran.RollBack();
+//			usertran = null;
+			tran.RollBack();
+			isUserTransaction = false;
 			try {
+				db.close();
 				db = new Database(db.getDatabaseName());
 			} catch (IOException ie) {
 				ie.printStackTrace();
@@ -187,7 +200,7 @@ public class VirtualMachine {
 		// 下面是选择操作，这是个延时操作
 		case Select:
 			activity = Activity.Select;
-			//targetTable = p3;
+			// targetTable = p3;
 
 			break;
 
@@ -240,7 +253,9 @@ public class VirtualMachine {
 			joinResult = null;
 			isJoin = true;
 			joinIndex = 0;
-			tran = db.beginReadTrans();
+			if (!isUserTransaction) {
+				tran = db.beginReadTrans();
+			}
 			break;
 
 		case AddTable:
@@ -305,7 +320,7 @@ public class VirtualMachine {
 
 		// tran = null;
 		// result = null;
-		selectedColumns.clear(); 
+		selectedColumns.clear();
 		record.clear();
 		columns.clear();
 		updateAttrs.clear();
@@ -346,7 +361,9 @@ public class VirtualMachine {
 	}
 
 	private void dropTable() throws IOException, ClassNotFoundException {
-		tran = db.beginWriteTrans();
+		if (!isUserTransaction) {
+			tran = db.beginWriteTrans();
+		}
 		if (db.dropTable(targetTable, tran) == false) {
 			Util.log("删除表失败");
 		}
@@ -354,7 +371,9 @@ public class VirtualMachine {
 
 	private void createTable() throws IOException, ClassNotFoundException {
 		// 需要开启一个写事务
-		tran = db.beginWriteTrans();
+		if (!isUserTransaction) {
+			tran = db.beginWriteTrans();
+		}
 
 		List<String> headerName = new ArrayList<>();
 		List<BasicType> headerType = new ArrayList<>();
@@ -498,7 +517,9 @@ public class VirtualMachine {
 	}
 
 	private void delete() throws IOException, ClassNotFoundException {
-		tran = db.beginWriteTrans();
+		if (!isUserTransaction) {
+			tran = db.beginWriteTrans();
+		}
 
 //        //因下层未提供接口，暂时注释掉
 //        if(filters.size()==0){
@@ -524,7 +545,9 @@ public class VirtualMachine {
 	 * 对全表进行更新
 	 */
 	private void update() throws IOException, ClassNotFoundException {
-		tran = db.beginWriteTrans();
+		if (!isUserTransaction) {
+			tran = db.beginWriteTrans();
+		}
 		Cursor p = db.getTable(targetTable, tran).createCursor(tran);
 		List<String> header = db.getTable(targetTable, tran).getColumnsName();
 		// for(int i = 0 ; i < header.size() ; i++)
@@ -590,7 +613,9 @@ public class VirtualMachine {
 	 * 将一条记录插入到表中 因为上层没有产生default，下层也未提供接口，因此这里每次只能插入一条完整的记录
 	 */
 	private void insert() throws IOException, ClassNotFoundException {
-		tran = db.beginWriteTrans();
+		if (!isUserTransaction) {
+			tran = db.beginWriteTrans();
+		}
 		List<String> colValues = new ArrayList<>();
 
 		for (List<EvalDiscription> item : updateValues) {

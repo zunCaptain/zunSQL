@@ -42,6 +42,9 @@ public class App {
 		//result = dbinstance.Execute("insert into teacher(teano, tname ,Tcourse) values (2017004, 'jun',  'DS')");		
 		//result = dbinstance.Execute("insert into teacher(teano, tname ,Tcourse) values (2017006, 'zhang',  'c')");
 		result = dbinstance.Execute("insert into courseTable(courseName,courseNumber) values ('OS',1024)");
+		
+		result = dbinstance.Execute("select courseNumber from courseTable");
+		System.out.println(result.getRes());
 
 		//result = dbinstance.Execute("create table student(stuno int primary key, name varchar ,score double,course varchar)");
 		///result = dbinstance.Execute("insert into student (stuno, name, score, course) values (2017006, 'ZHANG', 95, 'KS')");
@@ -62,7 +65,10 @@ public class App {
 		
 		result = dbinstance.Execute("insert into courseTable(courseName,courseNumber) values ('JK',2048)");
 		
-		result = dbinstance.Execute("commit");
+		result = dbinstance.Execute("select courseNumber from courseTable");
+		System.out.println(result.getRes());
+		
+		result = dbinstance.Execute("rollback");
 		
 		result = dbinstance.Execute("select courseNumber from courseTable");
 		System.out.println(result.getRes());

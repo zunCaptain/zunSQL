@@ -313,14 +313,14 @@ public class CacheMgr {
 //        this.transMgr.remove(transID);
 //        this.transOnPage.remove(transID);
 		trans.commit();
-		
-		if(userTransList != null) {
+
+		if (userTransList != null) {
 			userTransList.add(transID);
-		}else {
-			File journal_file = new File(Integer.toString(transID) + "-journal");
-			journal_file.delete();
+		} else {
+//			File journal_file = new File(Integer.toString(transID) + "-journal");
+//			journal_file.delete();
 		}
-		
+
 		return true;
 	}
 
@@ -329,12 +329,12 @@ public class CacheMgr {
 
 		trans.commit();
 		int index = (int) (userTransList.size()) - 1;
-				
-		for (; index >= 0; --index) {
-			File journal_file = new File(Integer.toString(userTransList.get(index)) + "-journal");
-			journal_file.delete();
-		}
-		
+
+//		for (; index >= 0; --index) {
+//			File journal_file = new File(Integer.toString(userTransList.get(index)) + "-journal");
+//			journal_file.delete();
+//		}
+
 		this.userTransList = null;
 
 		return true;
@@ -348,7 +348,8 @@ public class CacheMgr {
 		Transaction trans = transMgr.get(transID);
 		FileChannel fc = null;
 		Page tempPage = null;
-		if (trans.WR) {
+//		if (trans.WR) {
+		if (false) {
 			File journal_file = new File(Integer.toString(transID) + "-journal");
 //			System.out.println("This is file length:" + journal_file.length());
 			int num = (int) (journal_file.length() / 1028);
@@ -428,9 +429,9 @@ public class CacheMgr {
 		int index = (int) (userTransList.size()) - 1;
 		for (; index >= 0; --index) {
 			rollbackTransation(userTransList.get(index));
-			
-			File journal_file = new File(Integer.toString(userTransList.get(index)) + "-journal");
-			journal_file.delete();
+
+//			File journal_file = new File(Integer.toString(userTransList.get(index)) + "-journal");
+//			journal_file.delete();
 		}
 
 		trans.rollback();
