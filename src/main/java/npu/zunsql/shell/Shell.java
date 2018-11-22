@@ -1,5 +1,7 @@
 package npu.zunsql.shell;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import npu.zunsql.DBInstance;
 import npu.zunsql.cache.CacheMgr;
@@ -24,6 +26,7 @@ public class Shell
 		int DB_num = 0;
 		QueryResult result;
 		String printwords = "zunSQL>";
+		System.out.println("Enter \".help\" for usage hints.");
 		while(true)
 		{
 		    System.out.print(printwords);
@@ -56,6 +59,7 @@ public class Shell
 		    	    	//DB is full
 		    	    	if(DB_num == 10)
 		    	    	{
+		    	    		System.out.println("DB is full.");
 		    	    		break;
 		    	    	}
 		    	    	DB[GetDBNo(DBName, DB)] = DBName;
@@ -144,9 +148,28 @@ public class Shell
 		                result = dbinstance[CheckDBName(worked_DB, DB, DB_num)].Execute(user_command);   
 		                if(result != null)
 		                {
+		                	//set the format of the table
 		                	if(user_command.toLowerCase().startsWith("select"))
 		                	{
-			                	System.out.println(result.getRes());
+		                		List<String> head = new ArrayList<String>();
+		                		head = result.getHeaderString();
+		                		List<String> item = new ArrayList<String>();
+		                		for(int i = 0;i < head.size(); i++)
+		                		{
+		                			System.out.printf("%-10s",head.get(i));
+		                		}
+		                		System.out.print("\n");
+		                		List<List<String>> ResultList = new ArrayList<>();
+		                		ResultList = result.getRes();
+		                		for(int i = 0;i < ResultList.size(); i++)
+		                		{
+		                			item = ResultList.get(i);
+		                			for(int j = 0;j < item.size(); j++)
+			                		{
+		                				System.out.printf("%-10s",item.get(j));
+			                		}
+		                			System.out.print("\n");
+		                		}
 		                	}
 		                }
 		            }
@@ -261,9 +284,9 @@ public class Shell
 	//information
 	public static void HelpInfor() 
 	{
-		System.out.println(".open  *.db    Open a database");
+		System.out.println(".open  *.db    Open a database or create a new database");
 		System.out.println(".close *.db    Close a database");
-		System.out.println(".work *.db    Update the * database to the current database");
+		System.out.println(".work *.db     Update the * database to the current database");
 		System.out.println(".help          Show this message");
 	}
 }
