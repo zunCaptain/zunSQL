@@ -4,14 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import npu.zunsql.DBInstance;
-import npu.zunsql.cache.CacheMgr;
-import npu.zunsql.cache.Page;
-import npu.zunsql.cache.Transaction;
 import npu.zunsql.virenv.QueryResult;
-import sun.misc.Cache;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import npu.zunsql.DBInstance;
 
 public class Shell 
@@ -24,8 +17,8 @@ public class Shell
 		String[] DB= new String[10];
 	    String worked_DB = "";
 		int DB_num = 0;
-		QueryResult result;
 		String printwords = "zunSQL>";
+		String commandlist = "";
 		System.out.println("Enter \".help\" for usage hints.");
 		while(true)
 		{
@@ -110,8 +103,8 @@ public class Shell
 			        	}
 		        	}
 				    break;
-				//.work
-		        case ".work":
+				//.use
+		        case ".use":
 			        DBName = MakeCMD(user_command);
 			        if(DBName.charAt(0) == ' ')
 		    	    {
@@ -143,41 +136,72 @@ public class Shell
 		        		{
 		        			System.out.println("please open a database firstly.");
 		        			break;
-		        		}
+		        		}		        		
 		        		//execute the SQL
-		                result = dbinstance[CheckDBName(worked_DB, DB, DB_num)].Execute(user_command);   
-		                if(result != null)
-		                {
-		                	//set the format of the table
-		                	if(user_command.toLowerCase().startsWith("select"))
-		                	{
-		                		List<String> head = new ArrayList<String>();
-		                		head = result.getHeaderString();
-		                		List<String> item = new ArrayList<String>();
-		                		for(int i = 0;i < head.size(); i++)
-		                		{
-		                			System.out.printf("%-10s",head.get(i));
-		                		}
-		                		System.out.print("\n");
-		                		List<List<String>> ResultList = new ArrayList<>();
-		                		ResultList = result.getRes();
-		                		for(int i = 0;i < ResultList.size(); i++)
-		                		{
-		                			item = ResultList.get(i);
-		                			for(int j = 0;j < item.size(); j++)
-			                		{
-		                				System.out.printf("%-10s",item.get(j));
-			                		}
-		                			System.out.print("\n");
-		                		}
-		                	}
-		                }
+		        		if(user_command.endsWith(";"))
+		        		{
+		        			commandlist = commandlist + user_command;
+		        			String acommand = "";
+		        			for(int i = 0; i < commandlist.length(); i++)
+		        			{
+		        				if(commandlist.charAt(i) == ';')
+		        				{
+		        					DoSQL(dbinstance[CheckDBName(worked_DB, DB, DB_num)],acommand);
+		        					acommand = "";
+		        				}
+		        				else
+		        				{
+		        					acommand = acommand + commandlist.charAt(i);
+		        				}
+		        			}
+		        			commandlist = "";
+		        			printwords = '[' + worked_DB + "]>";
+		        		}
+		        		else
+		        		{
+		        			commandlist = commandlist + user_command;
+		        			printwords = "....>";
+		        			break;
+		        		}
 		            }
 		            break;
 		        }
 		    }
 		    
 		}
+	}
+	
+	private static void DoSQL(DBInstance dbInstance, String user_command) 
+	{
+		// TODO Auto-generated method stub
+		QueryResult result;
+		result = dbInstance.Execute(user_command);   
+        if(result != null)
+        {
+        	//set the format of the table
+        	if(user_command.toLowerCase().startsWith("select"))
+        	{
+        		List<String> head = new ArrayList<String>();
+        		head = result.getHeaderString();
+        		List<String> item = new ArrayList<String>();
+        		for(int i = 0;i < head.size(); i++)
+        		{
+        			System.out.printf("%s\t",head.get(i));
+        		}
+        		System.out.print("\n");
+        		List<List<String>> ResultList = new ArrayList<>();
+        		ResultList = result.getRes();
+        		for(int i = 0;i < ResultList.size(); i++)
+        		{
+        			item = ResultList.get(i);
+        			for(int j = 0;j < item.size(); j++)
+            		{
+        				System.out.printf("%s\t",item.get(j));
+            		}
+        			System.out.print("\n");
+        		}
+        	}
+        }
 	}
 	public static int GetDBNo(String DBName, String[] DB)
 	{
@@ -286,7 +310,7 @@ public class Shell
 	{
 		System.out.println(".open  *.db    Open a database or create a new database");
 		System.out.println(".close *.db    Close a database");
-		System.out.println(".work *.db     Update the * database to the current database");
+		System.out.println(".use *.db      Update the * database to the current database");
 		System.out.println(".help          Show this message");
 	}
 }
