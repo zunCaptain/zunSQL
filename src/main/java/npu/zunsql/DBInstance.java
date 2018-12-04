@@ -9,6 +9,7 @@ import npu.zunsql.virenv.VirtualMachine;
 import npu.zunsql.treemng.Database;
 
 import java.io.IOException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -54,10 +55,12 @@ public class DBInstance
 		return new DBInstance(db);
 	}
 
+	List<Relation> statements = new ArrayList<Relation>();
+	
 	public QueryResult Execute(String statement)
 	{
 		//瀹氫箟涓�涓狶ist<Relation>锛屽皢parse()杩斿洖鐨凴elation瀵硅薄濉叆
-		List<Relation> statements = new ArrayList<Relation>();
+		
 		try{
 			statements.add(Parser.parse(statement));
 		}catch(Exception e)
@@ -66,7 +69,14 @@ public class DBInstance
 			return null;
 		}
 
+		//for(int i=0;i<statements.size();i++)
+		//    System.out.println(statements.get(i));
+		
 		List<Instruction> Ins = CodeGenerator.GenerateByteCode(statements);
+		
+		//for(int i=0;i<Ins.size();i++)
+		//    System.out.println(Ins.get(i));
+		
 		try {
 			return vm.run(Ins);
 		}catch(Exception e){
@@ -79,6 +89,7 @@ public class DBInstance
 	{
 		try {
 			db.close();
+			statements.clear();
 		}catch(Exception e){
 			e.printStackTrace();
 		}

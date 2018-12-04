@@ -9,19 +9,30 @@ import java.util.List;
 
 public class CodeGenerator {
 //	static Boolean inTransaction = false;
+	
     public static final List<Instruction> GenerateByteCode(List<Relation> statements) {
         Integer selectTableName = 0;
         List<Instruction> ret = new ArrayList<>();
         Boolean inTransaction = false;
+        Boolean isUserTranscation = false;
+        
+        
+        int iiii=0;
         for (Relation statement : statements) {
+        	iiii = iiii + 1;
+        	System.out.println(iiii);
             if (statement instanceof Begin) {
                 inTransaction = true;
-                ret.add(new Instruction(OpCode.Begin, null, null, null));
+                isUserTranscation = true;
+                
+                System.out.println(isUserTranscation + "\n" );
+                ret.add(new Instruction(OpCode.Transaction, null, null, null));
                 continue;
             }
+            System.out.println(isUserTranscation + "\n");
             if (statement instanceof Commit) {
                 inTransaction = false;
-                ret.add(new Instruction(OpCode.UserCommit, null, null, null));
+                ret.add(new Instruction(OpCode.Commit, null, null, null));
                 continue;
             }
             if (statement instanceof Rollback) {
@@ -29,11 +40,17 @@ public class CodeGenerator {
                 ret.add(new Instruction(OpCode.Rollback, null, null, null));
                 continue;
             }
-            if (!inTransaction) {
-                ret.add(new Instruction(OpCode.Transaction, null, null, null));
-            }
+            //if (!inTransaction) {
+           //     ret.add(new Instruction(OpCode.Transaction, null, null, null));
+           // }
             TYPE_SWITCH:
             {
+            	if(!isUserTranscation)
+            	{
+            		System.out.println(isUserTranscation + "\n");
+            		System.out.println("111");
+            		ret.add(new Instruction(OpCode.Transaction, null, null, null));
+            	}
                 if (statement instanceof Select) {
                     selectTableName += 1;
                     ret.add(new Instruction(OpCode.BeginJoin, "", "", ""));
@@ -118,7 +135,7 @@ public class CodeGenerator {
                 }
             }
             ret.add(new Instruction(OpCode.Execute, null, null, null));
-            if (!inTransaction) {
+            if (!isUserTranscation) {
                 ret.add(new Instruction(OpCode.Commit, null, null, null));
             }
         }

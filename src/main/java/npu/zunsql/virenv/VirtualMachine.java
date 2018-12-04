@@ -10,31 +10,31 @@ import java.util.*;
 //import javax.sound.sampled.Port.Info;
 
 public class VirtualMachine {
-	// 作为过滤器来对记录进行筛选
+	// 浣滀负杩囨护鍣ㄦ潵瀵硅褰曡繘琛岀瓫閫�
 	private List<EvalDiscription> filters;
-	// 存储被选出的列
+	// 瀛樺偍琚�夊嚭鐨勫垪
 	private List<String> selectedColumns;
-	// 存储要插入的记录
+	// 瀛樺偍瑕佹彃鍏ョ殑璁板綍
 	private List<AttrInstance> record;
-	// 存储要创建表的各项表头，该数据结构仅用于创建表
+	// 瀛樺偍瑕佸垱寤鸿〃鐨勫悇椤硅〃澶达紝璇ユ暟鎹粨鏋勪粎鐢ㄤ簬鍒涘缓琛�
 	private List<Column> columns;
-	// 存储execute指令执行后的查询结构，仅select指令对应的操作会使得该集合非空
+	// 瀛樺偍execute鎸囦护鎵ц鍚庣殑鏌ヨ缁撴瀯锛屼粎select鎸囦护瀵瑰簲鐨勬搷浣滀細浣垮緱璇ラ泦鍚堥潪绌�
 	private QueryResult result;
-	// 要操作的对象表名
+	// 瑕佹搷浣滅殑瀵硅薄琛ㄥ悕
 	private String targetTable;
-	// 创建表时主键的名称存储在该变量中
+	// 鍒涘缓琛ㄦ椂涓婚敭鐨勫悕绉板瓨鍌ㄥ湪璇ュ彉閲忎腑
 	private String pkName;
-	// 要更新的属性名称，顺序必须与下一个变量的顺序一致
+	// 瑕佹洿鏂扮殑灞炴�у悕绉帮紝椤哄簭蹇呴』涓庝笅涓�涓彉閲忕殑椤哄簭涓�鑷�
 	private List<String> updateAttrs;
-	// 要更新的属性值，顺序必须与上一个变量的顺序一致
+	// 瑕佹洿鏂扮殑灞炴�у�硷紝椤哄簭蹇呴』涓庝笂涓�涓彉閲忕殑椤哄簭涓�鑷�
 	private List<List<EvalDiscription>> updateValues;
-	// 临时变量
+	// 涓存椂鍙橀噺
 	private List<EvalDiscription> singleUpdateValue;
-	// 记录本次execute将执行的命令
+	// 璁板綍鏈execute灏嗘墽琛岀殑鍛戒护
 	private Activity activity;
-	// 作为join操作的结果集
+	// 浣滀负join鎿嶄綔鐨勭粨鏋滈泦
 	private QueryResult joinResult;
-	// 事务句柄
+	// 浜嬪姟鍙ユ焺
 	private Transaction tran;
 	private Transaction usertran;
 
@@ -79,9 +79,11 @@ public class VirtualMachine {
 	public QueryResult run(List<Instruction> instructions) throws Exception {
 
 		for (Instruction cmd : instructions) {
-//			 System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
+			 System.out.println(cmd.opCode + " " + cmd.p1 + " " + cmd.p2 + " " + cmd.p3);
 			run(cmd);
+			//try catch 出现错误上面的指令全部rollback
 		}
+		System.out.println("\n");
 		// isJoin= false;
 		return result;
 	}
@@ -92,14 +94,14 @@ public class VirtualMachine {
 		String p2 = instruction.p2;
 		String p3 = instruction.p3;
 
-		// 所有操作都是延时操作，即在execute后生效，其他命令只会向VM中填充信息
-		// 特例是commit指令和rollback指令会立即执行
+		// 鎵�鏈夋搷浣滈兘鏄欢鏃舵搷浣滐紝鍗冲湪execute鍚庣敓鏁堬紝鍏朵粬鍛戒护鍙細鍚慥M涓～鍏呬俊鎭�
+		// 鐗逛緥鏄痗ommit鎸囦护鍜宺ollback鎸囦护浼氱珛鍗虫墽琛�
 		switch (opCode) {
-		// 下面是关于事务的处理代码
+		// 涓嬮潰鏄叧浜庝簨鍔＄殑澶勭悊浠ｇ爜
 		case Transaction:
 			ConditonClear();
-			// 如果这里不能提供Transaction的类型，那么只能在execute的时候由虚拟机来自动推断
-			// 这里不做任何处理，因为上一层并没有交给本层事务类型
+			// 濡傛灉杩欓噷涓嶈兘鎻愪緵Transaction鐨勭被鍨嬶紝閭ｄ箞鍙兘鍦╡xecute鐨勬椂鍊欑敱铏氭嫙鏈烘潵鑷姩鎺ㄦ柇
+			// 杩欓噷涓嶅仛浠讳綍澶勭悊锛屽洜涓轰笂涓�灞傚苟娌℃湁浜ょ粰鏈眰浜嬪姟绫诲瀷
 			break;
 
 		case Begin:
@@ -112,7 +114,7 @@ public class VirtualMachine {
 			try {
 				tran.Commit();
 			} catch (IOException e) {
-				Util.log("提交失败");
+				Util.log("鎻愪氦澶辫触");
 				throw e;
 			}
 			tran = null;
@@ -126,7 +128,7 @@ public class VirtualMachine {
 				}
 				ConditonClear();
 			} catch (IOException e) {
-				Util.log("提交失败");
+				Util.log("鎻愪氦澶辫触");
 				throw e;
 			}
 			break;
@@ -148,7 +150,7 @@ public class VirtualMachine {
 			}
 			break;
 
-		// 下面是创建表的处理代码
+		// 涓嬮潰鏄垱寤鸿〃鐨勫鐞嗕唬鐮�
 		case CreateTable:
 			columns.clear();
 			activity = Activity.CreateTable;
@@ -161,28 +163,28 @@ public class VirtualMachine {
 			break;
 
 		case BeginPK:
-			// 在只支持一个属性作为主键的条件下，此操作本无意义
-			// 但指定主键意味着属性信息输入完毕，因此将columnsReadOnly置为true
+			// 鍦ㄥ彧鏀寔涓�涓睘鎬т綔涓轰富閿殑鏉′欢涓嬶紝姝ゆ搷浣滄湰鏃犳剰涔�
+			// 浣嗘寚瀹氫富閿剰鍛崇潃灞炴�т俊鎭緭鍏ュ畬姣曪紝鍥犳灏哻olumnsReadOnly缃负true
 			columnsReadOnly = true;
 			break;
 
 		case AddPK:
-			// 在只支持一个属性作为主键的条件下，直接对pkName赋值即可
+			// 鍦ㄥ彧鏀寔涓�涓睘鎬т綔涓轰富閿殑鏉′欢涓嬶紝鐩存帴瀵筽kName璧嬪�煎嵆鍙�
 			pkName = p1;
 			break;
 
 		case EndPK:
-			// 在只支持一个属性作为主键的条件下，此操作无意义
-			// 暂时将此命令作为createTable结束的标志
+			// 鍦ㄥ彧鏀寔涓�涓睘鎬т綔涓轰富閿殑鏉′欢涓嬶紝姝ゆ搷浣滄棤鎰忎箟
+			// 鏆傛椂灏嗘鍛戒护浣滀负createTable缁撴潫鐨勬爣蹇�
 			break;
 
-		// 下面是删除表的操作
+		// 涓嬮潰鏄垹闄よ〃鐨勬搷浣�
 		case DropTable:
 			activity = Activity.DropTable;
 			targetTable = p3;
 			break;
 
-		// 下面是插入操作，这是个延时操作
+		// 涓嬮潰鏄彃鍏ユ搷浣滐紝杩欐槸涓欢鏃舵搷浣�
 		case Insert:
 			activity = Activity.Insert;
 			targetTable = p3;
@@ -191,26 +193,26 @@ public class VirtualMachine {
 
 			break;
 
-		// 下面是删除操作，这是个延时操作
+		// 涓嬮潰鏄垹闄ゆ搷浣滐紝杩欐槸涓欢鏃舵搷浣�
 		case Delete:
 			activity = Activity.Delete;
 			targetTable = p3;
 			break;
 
-		// 下面是选择操作，这是个延时操作
+		// 涓嬮潰鏄�夋嫨鎿嶄綔锛岃繖鏄釜寤舵椂鎿嶄綔
 		case Select:
 			activity = Activity.Select;
 			// targetTable = p3;
 
 			break;
 
-		// 下面是更新操作，这是个延时操作
+		// 涓嬮潰鏄洿鏂版搷浣滐紝杩欐槸涓欢鏃舵搷浣�
 		case Update:
 			activity = Activity.Update;
 			targetTable = p3;
 			break;
 
-		// 下面是关于插入一条记录的内容的操作
+		// 涓嬮潰鏄叧浜庢彃鍏ヤ竴鏉¤褰曠殑鍐呭鐨勬搷浣�
 		case BeginItem:
 			recordReadOnly = false;
 			break;
@@ -222,7 +224,7 @@ public class VirtualMachine {
 			recordReadOnly = true;
 			break;
 
-		// 关于选择器的选项，这里借助表达式实现，仅在最后将记录的表达式传给filters
+		// 鍏充簬閫夋嫨鍣ㄧ殑閫夐」锛岃繖閲屽�熷姪琛ㄨ揪寮忓疄鐜帮紝浠呭湪鏈�鍚庡皢璁板綍鐨勮〃杈惧紡浼犵粰filters
 		case BeginFilter:
 			suvReadOnly = false;
 			singleUpdateValue = new ArrayList<>();
@@ -234,7 +236,7 @@ public class VirtualMachine {
 			suvReadOnly = true;
 			break;
 
-		// 下面是关于select选择的属性的设置
+		// 涓嬮潰鏄叧浜巗elect閫夋嫨鐨勫睘鎬х殑璁剧疆
 		case BeginColSelect:
 			selectedColumnsReadOnly = false;
 			break;
@@ -247,9 +249,9 @@ public class VirtualMachine {
 			selectedColumnsReadOnly = true;
 			break;
 
-		// 下面是处理选择的表的连接操作的代码
+		// 涓嬮潰鏄鐞嗛�夋嫨鐨勮〃鐨勮繛鎺ユ搷浣滅殑浠ｇ爜
 		case BeginJoin:
-			// 接收到join命令，清空临时表
+			// 鎺ユ敹鍒癹oin鍛戒护锛屾竻绌轰复鏃惰〃
 			joinResult = null;
 			isJoin = true;
 			joinIndex = 0;
@@ -260,14 +262,14 @@ public class VirtualMachine {
 
 		case AddTable:
 			targetTable = p1;
-			// 调用下层方法，加载p1表，将自然连接的结果存入joinResult
+			// 璋冪敤涓嬪眰鏂规硶锛屽姞杞絧1琛紝灏嗚嚜鐒惰繛鎺ョ殑缁撴灉瀛樺叆joinResult
 			join(targetTable);
 			break;
 
 		case EndJoin:
 			break;
 
-		// 下面的代码设置update要更新的值，形式为colName=Expression
+		// 涓嬮潰鐨勪唬鐮佽缃畊pdate瑕佹洿鏂扮殑鍊硷紝褰㈠紡涓篶olName=Expression
 		case Set:
 			updateAttrs.add(p1);
 			break;
@@ -289,7 +291,7 @@ public class VirtualMachine {
 			suvReadOnly = true;
 			break;
 
-		// 记录Expression描述的代码
+		// 璁板綍Expression鎻忚堪鐨勪唬鐮�
 		case Operand:
 			singleUpdateValue.add(new EvalDiscription(opCode, p1, p2));
 			// System.out.println("###singleUpdateValue:"+singleUpdateValue.get(0).cmd+" "+
@@ -305,7 +307,7 @@ public class VirtualMachine {
 			break;
 
 		default:
-			Util.log("没有这样的字节码: " + opCode + " " + p1 + " " + p2 + " " + p3);
+			Util.log("娌℃湁杩欐牱鐨勫瓧鑺傜爜: " + opCode + " " + p1 + " " + p2 + " " + p3);
 			break;
 
 		}
@@ -365,12 +367,12 @@ public class VirtualMachine {
 			tran = db.beginWriteTrans();
 		}
 		if (db.dropTable(targetTable, tran) == false) {
-			Util.log("删除表失败");
+			Util.log("鍒犻櫎琛ㄥけ璐�");
 		}
 	}
 
 	private void createTable() throws IOException, ClassNotFoundException {
-		// 需要开启一个写事务
+		// 闇�瑕佸紑鍚竴涓啓浜嬪姟
 		if (!isUserTransaction) {
 			tran = db.beginWriteTrans();
 		}
@@ -395,18 +397,18 @@ public class VirtualMachine {
 		// for(int i = 0 ; i < headerName.size();i++)
 		// System.out.println(headerName.get(i));
 		if (db.createTable(targetTable, pkName, headerName, headerType, tran) == null) {
-			Util.log("创建表失败");
+			Util.log("鍒涘缓琛ㄥけ璐�");
 		}
 	}
 
 	/**
-	 * 检查当前记录是否满足where子句的条件
+	 * 妫�鏌ュ綋鍓嶈褰曟槸鍚︽弧瓒硍here瀛愬彞鐨勬潯浠�
 	 *
-	 * @param p 当前表上的指针
-	 * @return 满足条件返回true，否则返回false
+	 * @param p 褰撳墠琛ㄤ笂鐨勬寚閽�
+	 * @return 婊¤冻鏉′欢杩斿洖true锛屽惁鍒欒繑鍥瀎alse
 	 */
 	private boolean check(Cursor p) throws IOException, ClassNotFoundException {
-		// 如果没有where子句，那么返回true，即对所有记录都执行操作
+		// 濡傛灉娌℃湁where瀛愬彞锛岄偅涔堣繑鍥瀟rue锛屽嵆瀵规墍鏈夎褰曢兘鎵ц鎿嶄綔
 		if (filters.size() == 0) {
 			return true;
 		}
@@ -419,7 +421,7 @@ public class VirtualMachine {
 			// System.out.println("this should show twice");
 		}
 		if (ans.getType() == BasicType.String) {
-			Util.log("where子句的表达式返回值不能为String");
+			Util.log("where瀛愬彞鐨勮〃杈惧紡杩斿洖鍊间笉鑳戒负String");
 			return false;
 		} else if (Math.abs(Double.valueOf(ans.getValue())) < 1e-10) {
 			return false;
@@ -428,9 +430,9 @@ public class VirtualMachine {
 		}
 	}
 
-	// 根据joinIndex检测该条记录是否满足filter
+	// 鏍规嵁joinIndex妫�娴嬭鏉¤褰曟槸鍚︽弧瓒砯ilter
 	private boolean check(int Index) throws IOException, ClassNotFoundException {
-		// 如果没有where子句，那么返回true，即对所有记录都执行操作
+		// 濡傛灉娌℃湁where瀛愬彞锛岄偅涔堣繑鍥瀟rue锛屽嵆瀵规墍鏈夎褰曢兘鎵ц鎿嶄綔
 		if (filters.size() == 0) {
 			return true;
 		}
@@ -438,7 +440,7 @@ public class VirtualMachine {
 		UnionOperand ans;
 		ans = eval(filters, Index);
 		if (ans.getType() == BasicType.String) {
-			Util.log("where子句的表达式返回值不能为String");
+			Util.log("where瀛愬彞鐨勮〃杈惧紡杩斿洖鍊间笉鑳戒负String");
 			return false;
 		} else if (Math.abs(Double.valueOf(ans.getValue())) < 1e-10) {
 			return false;
@@ -449,7 +451,7 @@ public class VirtualMachine {
 
 	private void select() throws IOException, ClassNotFoundException {
 
-		// 构造结果集的表头
+		// 鏋勯�犵粨鏋滈泦鐨勮〃澶�
 		List<Column> selected = new ArrayList<>();
 		List<String> temp;
 		for (String colName : selectedColumns) {
@@ -473,9 +475,9 @@ public class VirtualMachine {
 			}
 			temp = joinResult.getHeaderString();
 
-			// 用于joinResult的循环匹配。
+			// 鐢ㄤ簬joinResult鐨勫惊鐜尮閰嶃��
 			for (int k = 0; k < joinResult.getRes().size(); k++, joinIndex++) {
-				// 此处应该检测joinResult.get(k)是否满足filter
+				// 姝ゅ搴旇妫�娴媕oinResult.get(k)鏄惁婊¤冻filter
 				if (check(k)) {
 					List<String> ansRecord = new ArrayList<>();
 					for (int i = 0; i < temp.size(); i++) {
@@ -521,7 +523,7 @@ public class VirtualMachine {
 			tran = db.beginWriteTrans();
 		}
 
-//        //因下层未提供接口，暂时注释掉
+//        //鍥犱笅灞傛湭鎻愪緵鎺ュ彛锛屾殏鏃舵敞閲婃帀
 //        if(filters.size()==0){
 //            db.getTable(targetTable,tran).clear(tran);
 //        }
@@ -542,7 +544,7 @@ public class VirtualMachine {
 	}
 
 	/**
-	 * 对全表进行更新
+	 * 瀵瑰叏琛ㄨ繘琛屾洿鏂�
 	 */
 	private void update() throws IOException, ClassNotFoundException {
 		if (!isUserTransaction) {
@@ -560,13 +562,13 @@ public class VirtualMachine {
 				// System.out.println("updateAttrs.size:"+updateAttrs.size());
 
 				for (int i = 0; i < updateAttrs.size(); i++) {
-					// 查询要更新的属性的信息并创建cell对象来执行更新
+					// 鏌ヨ瑕佹洿鏂扮殑灞炴�х殑淇℃伅骞跺垱寤篶ell瀵硅薄鏉ユ墽琛屾洿鏂�
 					// String attrname = record.get(i).attrName;
 					String attrname = updateAttrs.get(i);
 					// String attrname = "name";
 					// System.out.println("record
 					// name:"+attrname+",updateAttrs.size="+updateAttrs.size());
-					// 循环的方式是否正确?
+					// 寰幆鐨勬柟寮忔槸鍚︽纭�?
 					/*
 					 * for (String info : header) { if (info.equals(attrname)) {
 					 * System.out.println("******"+info); row.set(i, eval(updateValues.get(i),
@@ -610,7 +612,7 @@ public class VirtualMachine {
 	}
 
 	/**
-	 * 将一条记录插入到表中 因为上层没有产生default，下层也未提供接口，因此这里每次只能插入一条完整的记录
+	 * 灏嗕竴鏉¤褰曟彃鍏ュ埌琛ㄤ腑 鍥犱负涓婂眰娌℃湁浜х敓default锛屼笅灞備篃鏈彁渚涙帴鍙ｏ紝鍥犳杩欓噷姣忔鍙兘鎻掑叆涓�鏉″畬鏁寸殑璁板綍
 	 */
 	private void insert() throws IOException, ClassNotFoundException {
 		if (!isUserTransaction) {
@@ -628,10 +630,10 @@ public class VirtualMachine {
 	}
 
 	/**
-	 * 确定一个字符串值的最小可承载类型
+	 * 纭畾涓�涓瓧绗︿覆鍊肩殑鏈�灏忓彲鎵胯浇绫诲瀷
 	 *
-	 * @param strVal 要判断的值
-	 * @return 最小的可承载类型
+	 * @param strVal 瑕佸垽鏂殑鍊�
+	 * @return 鏈�灏忕殑鍙壙杞界被鍨�
 	 */
 	private static BasicType lowestType(String strVal) {
 		int dot = 0;
@@ -655,10 +657,10 @@ public class VirtualMachine {
 	}
 
 	/**
-	 * 根据表达式的描述求值
+	 * 鏍规嵁琛ㄨ揪寮忕殑鎻忚堪姹傚��
 	 *
-	 * @param evalDiscriptions 要计算的表达式描述
-	 * @param p                计算时需要依赖的数据的指针
+	 * @param evalDiscriptions 瑕佽绠楃殑琛ㄨ揪寮忔弿杩�
+	 * @param p                璁＄畻鏃堕渶瑕佷緷璧栫殑鏁版嵁鐨勬寚閽�
 	 */
 	private UnionOperand eval(List<EvalDiscription> evalDiscriptions, Cursor p)
 			throws IOException, ClassNotFoundException {
@@ -688,7 +690,7 @@ public class VirtualMachine {
 	}
 
 	/**
-	 * eval的重载，在下层不提供视图机制的时候用于处理临时表。
+	 * eval鐨勯噸杞斤紝鍦ㄤ笅灞備笉鎻愪緵瑙嗗浘鏈哄埗鐨勬椂鍊欑敤浜庡鐞嗕复鏃惰〃銆�
 	 */
 	private UnionOperand eval(List<EvalDiscription> evalDiscriptions, int Index) {
 		Expression exp = new Expression();
@@ -723,7 +725,7 @@ public class VirtualMachine {
 	private void join(String tableName) throws IOException, ClassNotFoundException {
 		Table table = db.getTable(tableName, tran);
 		List<Column> fromTreeHead = new ArrayList<>();
-		// 此处应该加入colnumType,之后见面商量一下
+		// 姝ゅ搴旇鍔犲叆colnumType,涔嬪悗瑙侀潰鍟嗛噺涓�涓�
 
 		table.getColumnsName().forEach(n -> fromTreeHead.add(new Column(n)));
 		List<BasicType> types = table.getColumnsType();
@@ -750,7 +752,7 @@ public class VirtualMachine {
 		// List<Column> resHead = joinResult.getHeader();
 		// JoinMatch matchedJoin = checkUnion(resHead, fromTreeHead);
 		// QueryResult copy = new QueryResult(matchedJoin.getJoinHead());
-		// 得到join结果的头，即列表名
+		// 寰楀埌join缁撴灉鐨勫ご锛屽嵆鍒楄〃鍚�
 		List<Column> joinHead = joinResult.getHeader();
 		int snglJoin = joinResult.getHeader().size();
 		table.getColumnsName().forEach(n -> joinHead.add(new Column(n)));
@@ -758,7 +760,7 @@ public class VirtualMachine {
 			joinHead.get(ndx1).ColumnType = types.get(ndx1 - snglJoin).toString();
 		}
 
-		// 将两个表进行全连接，作为一个表进行判断
+		// 灏嗕袱涓〃杩涜鍏ㄨ繛鎺ワ紝浣滀负涓�涓〃杩涜鍒ゆ柇
 
 		QueryResult joinRes = new QueryResult(joinHead);
 
@@ -807,7 +809,7 @@ public class VirtualMachine {
 		return new JoinMatch(unionHead, unionUnder);
 	}
 
-	// 这个方法只用于测试自然连接操作。
+	// 杩欎釜鏂规硶鍙敤浜庢祴璇曡嚜鐒惰繛鎺ユ搷浣溿��
 	public QueryResult forTestJoin(JoinMatch joinMatch, QueryResult input1, QueryResult input2) {
 		int matchCount = 0;
 		QueryResult copy = new QueryResult(joinMatch.getJoinHead());
